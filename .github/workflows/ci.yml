@@ -1,0 +1,78 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # ---------------------------------------------------------
+  # 1. .NET 8 Build & Test
+  # ---------------------------------------------------------
+  dotnet:
+    name: .NET 8 Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore dotnet/TuyaLan.sln
+
+      - name: Build
+        run: dotnet build dotnet/TuyaLan.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test dotnet/TuyaLan.sln --no-build --configuration Release --verbosity normal
+
+  # ---------------------------------------------------------
+  # 2. Android (Kotlin) Build & Test
+  # ---------------------------------------------------------
+  android:
+    name: Android Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      - name: Build and Test
+        run: cd android && ./gradlew :tuya-lan:build --no-daemon
+
+  # ---------------------------------------------------------
+  # 3. Python Tools Validation
+  # ---------------------------------------------------------
+  python-tools:
+    name: Python Tools Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run Reference Implementation Self-Test
+        run: python3 tools/reference_impl.py --selftest
+
+      - name: Run Roundtrip Test
+        run: python3 tools/test_roundtrip.py
