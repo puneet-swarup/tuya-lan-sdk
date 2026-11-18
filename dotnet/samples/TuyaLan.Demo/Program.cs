@@ -70,7 +70,7 @@ internal static class Program
     {
         if (args.Length < 5) return Fail("usage: status <ip> <deviceId> <localKey> <version>");
 
-        await using var device = Build(args[1], args[2], args[3], args[4]).ConfigureAwait(false);
+        await using var device = Build(args[1], args[2], args[3], args[4]);
         device.StatusUpdated += (_, e) => Console.WriteLine($"  push: {e.Status}");
 
         Console.WriteLine($"Connecting to {args[1]} (protocol {device.Version.ToLabel()})...");
@@ -93,7 +93,7 @@ internal static class Program
     {
         if (args.Length < 6) return Fail("usage: toggle <ip> <deviceId> <localKey> <version> <dpId>");
 
-        await using var device = Build(args[1], args[2], args[3], args[4]).ConfigureAwait(false);
+        await using var device = Build(args[1], args[2], args[3], args[4]);
         await device.ConnectAsync().ConfigureAwait(false);
 
         var status = await device.GetStatusAsync().ConfigureAwait(false);
