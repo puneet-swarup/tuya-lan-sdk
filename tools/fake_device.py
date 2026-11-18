@@ -122,7 +122,7 @@ class FakeDevice:
     # ------------------------------------------------------------- protocol
 
     def handle_frame(self, connection, state, frame):
-        message = R.unpack_6699(frame, state["key"], retcode_policy="auto")
+        message = R.unpack_6699(frame, state["key"], retcode_policy="never")
         command = message["cmd"]
         payload = message["payload"]
         name = COMMAND_NAMES.get(command, "0x%02X" % command)
