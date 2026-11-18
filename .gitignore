@@ -1,0 +1,15 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Gradle / Android
+.gradle/
+local.properties
+build/
+*.iml
+.idea/
+
+# Python
+__pycache__/
+*.pyc

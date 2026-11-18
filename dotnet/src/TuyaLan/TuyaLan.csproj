@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>TuyaLan</RootNamespace>
+    <AssemblyName>TuyaLan</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <PackageId>TuyaLan</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Tuya LAN protocol (3.3 / 3.4 / 3.5) and Tuya Cloud API client for .NET.</Description>
+  </PropertyGroup>
+
+</Project>
