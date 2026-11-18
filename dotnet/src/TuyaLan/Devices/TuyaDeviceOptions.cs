@@ -18,6 +18,10 @@ public sealed class TuyaDeviceOptions
     /// <summary>The 16-character local key. Leave empty for discovery-only use.</summary>
     public string LocalKey { get; set; } = string.Empty;
 
+    /// <summary>Optional exact 16-byte local key for callers that already decoded the key.</summary>
+    /// <remarks>When supplied, this takes precedence over <see cref="LocalKey"/>.</remarks>
+    public byte[]? LocalKeyBytes { get; set; }
+
     /// <summary>Protocol revision. Use the <c>version</c> field from discovery.</summary>
     public TuyaProtocolVersion Version { get; set; } = TuyaProtocolVersion.V35;
 
@@ -54,12 +58,16 @@ public sealed class TuyaDeviceOptions
         if (string.IsNullOrWhiteSpace(Host)) throw new ArgumentException("Host is required", nameof(Host));
         if (Port is <= 0 or > 65535) throw new ArgumentException($"Port {Port} is out of range", nameof(Port));
         if (string.IsNullOrWhiteSpace(DeviceId)) throw new ArgumentException("DeviceId is required", nameof(DeviceId));
-        if (string.IsNullOrWhiteSpace(LocalKey)) throw new ArgumentException("LocalKey is required", nameof(LocalKey));
-        if (LocalKey.Length != TuyaCrypto.KeySize)
+        if (LocalKeyBytes is not null)
         {
-            throw new ArgumentException(
-                $"LocalKey must be exactly {TuyaCrypto.KeySize} characters, got {LocalKey.Length}",
-                nameof(LocalKey));
+            if (LocalKeyBytes.Length != TuyaCrypto.KeySize)
+                throw new ArgumentException($"LocalKeyBytes must be exactly {TuyaCrypto.KeySize} bytes, got {LocalKeyBytes.Length}", nameof(LocalKeyBytes));
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(LocalKey)) throw new ArgumentException("LocalKey or LocalKeyBytes is required", nameof(LocalKey));
+            if (LocalKey.Length != TuyaCrypto.KeySize)
+                throw new ArgumentException($"LocalKey must be exactly {TuyaCrypto.KeySize} characters, got {LocalKey.Length}", nameof(LocalKey));
         }
     }
 }

@@ -62,7 +62,7 @@ import org.json.JSONObject
  */
 class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
 
-    private val session = TuyaSession(options.version, options.localKey.toByteArray(Charsets.UTF_8)).apply {
+    private val session = TuyaSession(options.version, options.localKeyBytes?.copyOf() ?: options.localKey.toByteArray(Charsets.UTF_8)).apply {
         headerMode = options.headerMode
         retcodePolicy = options.retcodePolicy
     }

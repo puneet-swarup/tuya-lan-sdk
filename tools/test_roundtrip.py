@@ -33,6 +33,7 @@ class Client:
     def __init__(self, port):
         self.socket = socket.create_connection(("127.0.0.1", port), timeout=5)
         self.buffer = b""
+        self.pending_frames = []
         self.sequence = 0
 
     def send(self, key, command, payload, retcode=None):
@@ -41,9 +42,12 @@ class Client:
 
     def receive(self, key):
         while True:
+            if self.pending_frames:
+                return R.unpack_6699(self.pending_frames.pop(0), key, retcode_policy="auto")
             frames, self.buffer = split_frames(self.buffer)
             if frames:
-                return R.unpack_6699(frames[0], key, retcode_policy="auto")
+                self.pending_frames.extend(frames)
+                continue
             chunk = self.socket.recv(4096)
             if not chunk:
                 raise IOError("device closed the connection")

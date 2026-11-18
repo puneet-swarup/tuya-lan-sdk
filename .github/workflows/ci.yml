@@ -54,7 +54,7 @@ jobs:
         run: chmod +x android/gradlew
 
       - name: Build and Test
-        run: cd android && ./gradlew :tuya-lan:build --no-daemon
+        run: cd android && ./gradlew :tuya-lan:testDebugUnitTest :tuya-lan:assembleRelease :sample-app:assembleDebug --no-daemon
 
   # ---------------------------------------------------------
   # 3. Python Tools Validation

@@ -80,7 +80,7 @@ public static class TuyaCrypto
         if (tag.Length != GcmTagSize) throw new ArgumentException($"GCM tag must be {GcmTagSize} bytes", nameof(tag));
         if (ciphertext.Length != plaintext.Length) throw new ArgumentException("ciphertext span must match the plaintext length", nameof(ciphertext));
 
-        using var gcm = new AesGcm(key);
+        using var gcm = new AesGcm(key, GcmTagSize);
         gcm.Encrypt(nonce, plaintext, ciphertext, tag, associatedData);
     }
 
@@ -100,7 +100,7 @@ public static class TuyaCrypto
         if (tag.Length != GcmTagSize) throw new ArgumentException($"GCM tag must be {GcmTagSize} bytes", nameof(tag));
 
         var plaintext = new byte[ciphertext.Length];
-        using var gcm = new AesGcm(key);
+        using var gcm = new AesGcm(key, GcmTagSize);
         try
         {
             gcm.Decrypt(nonce, ciphertext, tag, plaintext, associatedData);

@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Linq;
 using TuyaLan.Cloud;
 using TuyaLan.Devices;
 using TuyaLan.Protocol;
@@ -37,7 +38,7 @@ public class ProtocolVectorTests
     {
         var frame = TuyaFrameCodec.Pack(TuyaProtocolVersion.V35, Key, 7, TuyaCommand.Control, Encoding.UTF8.GetBytes(Plaintext), iv: Iv);
         Assert.Equal(
-            "00006699000000000007000000070000005e3031323334353637383961621960699e582949ab39211286b4eb91c0a2bd405f5282246107fb141610fab2e4d9d58c73a1b6b8ef301af890e141a4b900938a107efb4eb841d994321b66c2f0478cd3b3916df1ada9d7c36cc7aeb1e64c2100009966",
+            "00006699000000000007000000070000006d303132333435363738396162516c38fb2e602d89030377e484daa388b4ec131e23df673946fa134046a0e8bacecf993fbaedebbb644faec7b918feab00939a4237e843f353d886385f2487b9189591b12b13fdc466bb000d2b9f2af999a134657804d53382f36628f48e2d438c00009966",
             TuyaCrypto.ToHex(frame));
     }
 
@@ -46,7 +47,7 @@ public class ProtocolVectorTests
     {
         var frame = TuyaFrameCodec.Pack(TuyaProtocolVersion.V35, Key, 8, TuyaCommand.Status, Encoding.UTF8.GetBytes(Plaintext), returnCode: 0, iv: Iv);
         Assert.Equal(
-            "00006699000000000008000000080000006230313233343536373839616262420dfb554249ec754a13c6bef8c691a6b9445b5e8e73345ca6101214f6bee89c91c76da1a0abac2210f997e141a4b91c81de5021fb10b310ca8c734d2595af4e8394a77454c43d5b3fbe57e279a439fcf618a54ebc00009966",
+            "00006699000000000008000000080000007130313233343536373839616262420dfb1d4e1889030377e484daa3f39688761348df20752dfb534a55f7b9becacb9d33b6babee0394baac3b514f2ee44d8844221fb00e159d981385f2487a50ac1d1ee2b4df69575a3415b68c875f0964be6dd4b96931b092d201d7ca3ba2916b1c2b28200009966",
             TuyaCrypto.ToHex(frame));
     }
 
@@ -168,6 +169,35 @@ public class ProtocolVectorTests
         Assert.Equal((uint)first.Length, (uint)parsed.Bytes.Length);
         Assert.True(TuyaFrameCodec.TryReadFrame(buffer.AsSpan(first.Length), out var next));
         Assert.Equal(2u, next.SequenceNumber);
+    }
+}
+
+public class DeviceOptionsTests
+{
+    private static TuyaDeviceOptions ValidOptions() => new() { Host = "192.168.1.10", DeviceId = "device-id" };
+
+    [Fact]
+    public void AcceptsExactBinaryLocalKeyWithoutStringKey()
+    {
+        var options = ValidOptions();
+        options.LocalKeyBytes = Enumerable.Range(0, TuyaCrypto.KeySize).Select(i => (byte)i).ToArray();
+        options.Validate();
+    }
+
+    [Fact]
+    public void RejectsBinaryLocalKeyWithWrongLength()
+    {
+        var options = ValidOptions();
+        options.LocalKeyBytes = new byte[TuyaCrypto.KeySize - 1];
+        Assert.Throws<ArgumentException>(() => options.Validate());
+    }
+
+    [Fact]
+    public void AcceptsStringLocalKeyWhenBinaryKeyIsAbsent()
+    {
+        var options = ValidOptions();
+        options.LocalKey = "0123456789abcdef";
+        options.Validate();
     }
 }
 

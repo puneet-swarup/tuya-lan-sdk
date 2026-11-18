@@ -36,12 +36,20 @@ data class TuyaDeviceOptions(
     val retcodePolicy: RetcodePolicy = RetcodePolicy.AUTO,
     /** Where the 15-byte version header goes for 3.3/3.4 frames. */
     val headerMode: VersionHeaderMode = VersionHeaderMode.INSIDE_CIPHERTEXT,
+    /** Optional exact 16-byte key for callers that already decoded a hex local key. */
+    val localKeyBytes: ByteArray? = null,
 ) {
     init {
         require(host.isNotBlank()) { "host is required" }
         require(deviceId.isNotBlank()) { "deviceId is required" }
-        require(localKey.length == TuyaCrypto.KEY_SIZE) {
-            "localKey must be exactly ${TuyaCrypto.KEY_SIZE} characters, got ${localKey.length}"
+        if (localKeyBytes == null) {
+            require(localKey.length == TuyaCrypto.KEY_SIZE) {
+                "localKey must be exactly ${TuyaCrypto.KEY_SIZE} characters, got ${localKey.length}"
+            }
+        } else {
+            require(localKeyBytes.size == TuyaCrypto.KEY_SIZE) {
+                "localKeyBytes must be exactly ${TuyaCrypto.KEY_SIZE} bytes, got ${localKeyBytes.size}"
+            }
         }
         require(port in 1..65535) { "port $port is out of range" }
     }

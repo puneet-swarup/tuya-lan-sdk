@@ -26,6 +26,21 @@ public sealed class TuyaStatusEventArgs : EventArgs
     public TuyaMessage Message { get; }
 }
 
+/// <summary>Metadata for a successfully decoded device message.</summary>
+public sealed class TuyaMessageReceivedEventArgs : EventArgs
+{
+    public TuyaMessageReceivedEventArgs(TuyaMessage message)
+    {
+        Command = message.Command;
+        SequenceNumber = message.SequenceNumber;
+        PayloadLength = message.Payload.Length;
+    }
+
+    public uint Command { get; }
+    public uint SequenceNumber { get; }
+    public int PayloadLength { get; }
+}
+
 /// <summary>Raised when a frame could not be decoded. The connection stays open.</summary>
 public sealed class TuyaProtocolErrorEventArgs : EventArgs
 {
@@ -87,7 +102,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _options.Validate();
-        _session = new TuyaSession(options.Version, Encoding.UTF8.GetBytes(options.LocalKey))
+        _session = new TuyaSession(options.Version, options.LocalKeyBytes?.ToArray() ?? Encoding.UTF8.GetBytes(options.LocalKey))
         {
             HeaderMode = options.HeaderMode,
             RetcodePolicy = options.RetcodePolicy,
@@ -96,6 +111,9 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
 
     /// <summary>Raised for every status frame, solicited or not.</summary>
     public event EventHandler<TuyaStatusEventArgs>? StatusUpdated;
+
+    /// <summary>Raised for every successfully decoded message; exposes metadata only.</summary>
+    public event EventHandler<TuyaMessageReceivedEventArgs>? MessageReceived;
 
     /// <summary>Raised when a frame cannot be decoded.</summary>
     public event EventHandler<TuyaProtocolErrorEventArgs>? ProtocolError;
@@ -192,7 +210,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         var reply = await SendRequestAsync(
             QueryCommand,
             BuildQueryPayload(),
-            new[] { TuyaCommand.Status, TuyaCommand.DpQueryNew, TuyaCommand.Control, TuyaCommand.ControlNew },
+            new[] { QueryCommand, TuyaCommand.Status, TuyaCommand.DpQueryNew, TuyaCommand.Control, TuyaCommand.ControlNew },
             cancellationToken).ConfigureAwait(false);
 
         var status = TuyaStatus.Parse(reply.Payload);
@@ -230,7 +248,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         await SendRequestAsync(
             ControlCommand,
             payload,
-            new[] { TuyaCommand.Control, TuyaCommand.ControlNew, TuyaCommand.Status, TuyaCommand.DpQueryNew },
+            new[] { ControlCommand, TuyaCommand.Control, TuyaCommand.ControlNew, TuyaCommand.Status, TuyaCommand.DpQueryNew },
             cancellationToken,
             tolerateTimeout: !_options.WaitForControlAck).ConfigureAwait(false);
     }
@@ -493,6 +511,8 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
             ProtocolError?.Invoke(this, new TuyaProtocolErrorEventArgs(ex));
             return;
         }
+
+        MessageReceived?.Invoke(this, new TuyaMessageReceivedEventArgs(message));
 
         var pending = _pending;
         if (pending is not null && pending.Accepts(message.Command))

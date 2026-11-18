@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
@@ -11,8 +10,15 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>TuyaLan</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/puneet-swarup/tuya-lan-sdk</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>tuya;lan;iot;smart-plug;android</PackageTags>
     <Description>Tuya LAN protocol (3.3 / 3.4 / 3.5) and Tuya Cloud API client for .NET.</Description>
   </PropertyGroup>
-
+  <ItemGroup>
+    <None Include="../../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>

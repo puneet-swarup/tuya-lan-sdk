@@ -65,7 +65,7 @@ object TuyaFrameCodec {
     ): ByteArray {
         TuyaCrypto.validateKey(key)
         return if (version.usesGcm) {
-            pack6699(key, sequenceNumber, command, plaintext, returnCode, iv)
+            pack6699(version, key, sequenceNumber, command, plaintext, returnCode, iv)
         } else {
             pack55aa(version, key, sequenceNumber, command, plaintext, returnCode, headerMode)
         }
@@ -139,6 +139,7 @@ object TuyaFrameCodec {
     // ------------------------------------------------------------------ 3.5
 
     private fun pack6699(
+        version: TuyaProtocolVersion,
         key: ByteArray,
         sequenceNumber: Long,
         command: Int,
@@ -146,13 +147,16 @@ object TuyaFrameCodec {
         returnCode: Long?,
         iv: ByteArray?,
     ): ByteArray {
+        val carriesHeader = TuyaCommand.carriesVersionHeader(command)
+        val versionHeader = version.versionHeader
+        val body = if (carriesHeader) versionHeader + plaintext else plaintext
         val raw = if (returnCode != null) {
-            val withReturnCode = ByteArray(4 + plaintext.size)
+            val withReturnCode = ByteArray(4 + body.size)
             ByteBuffer.wrap(withReturnCode).order(ByteOrder.BIG_ENDIAN).putInt(returnCode.toInt())
-            plaintext.copyInto(withReturnCode, 4)
+            body.copyInto(withReturnCode, 4)
             withReturnCode
         } else {
-            plaintext
+            body
         }
 
         val length = TuyaCrypto.GCM_NONCE_SIZE + raw.size + TuyaCrypto.GCM_TAG_SIZE
@@ -204,13 +208,17 @@ object TuyaFrameCodec {
 
         val raw = TuyaCrypto.aesGcmDecrypt(key, nonce, ciphertext, tag, associatedData)
         val split = splitReturnCode(raw, retcodePolicy)
+        val expectedHeader = TuyaProtocolVersion.V35.versionHeader
+        val payload = if (TuyaCommand.carriesVersionHeader(command) && split.second.size >= expectedHeader.size && split.second.copyOfRange(0, expectedHeader.size).contentEquals(expectedHeader)) {
+            split.second.copyOfRange(expectedHeader.size, split.second.size)
+        } else split.second
 
         return TuyaMessage(
             prefix = PREFIX_6699,
             sequenceNumber = sequenceNumber,
             command = command,
             returnCode = split.first,
-            payload = split.second,
+            payload = payload,
             iv = nonce,
         )
     }

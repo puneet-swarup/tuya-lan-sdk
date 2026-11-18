@@ -1,6 +1,7 @@
 package com.tuyalan
 
 import com.tuyalan.cloud.TuyaCloudSigner
+import com.tuyalan.devices.TuyaDeviceOptions
 import com.tuyalan.devices.TuyaDiscovery
 import com.tuyalan.devices.TuyaStatus
 import com.tuyalan.protocol.RetcodePolicy
@@ -8,6 +9,7 @@ import com.tuyalan.protocol.TuyaCommand
 import com.tuyalan.protocol.TuyaCrypto
 import com.tuyalan.protocol.TuyaFrameCodec
 import com.tuyalan.protocol.TuyaProtocolVersion
+import com.tuyalan.protocol.VersionHeaderMode
 import com.tuyalan.protocol.TuyaSession
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -35,6 +37,28 @@ class ProtocolVectorTest {
     private val plaintext = """{"devId":"eb0123456789abcdefghij","t":1700000000,"dps":{"1":true}}"""
 
     @Test
+    fun deviceOptionsAcceptExactBinaryLocalKey() {
+        val options = TuyaDeviceOptions(
+            host = "192.168.1.10", deviceId = "device-id", localKey = "",
+            localKeyBytes = ByteArray(TuyaCrypto.KEY_SIZE) { it.toByte() },
+        )
+        assertEquals(TuyaCrypto.KEY_SIZE, options.localKeyBytes?.size)
+    }
+
+    @Test
+    fun deviceOptionsRejectWrongLengthBinaryLocalKey() {
+        try {
+            TuyaDeviceOptions(
+                host = "192.168.1.10", deviceId = "device-id", localKey = "",
+                localKeyBytes = ByteArray(TuyaCrypto.KEY_SIZE - 1),
+            )
+            fail("Expected invalid binary key length to be rejected")
+        } catch (expected: IllegalArgumentException) {
+            assertTrue(expected.message!!.contains("localKeyBytes"))
+        }
+    }
+
+    @Test
     fun crc32MatchesReference() {
         assertEquals(2524178384L, TuyaCrypto.crc32(plaintext.toByteArray(Charsets.UTF_8)))
     }
@@ -46,7 +70,7 @@ class ProtocolVectorTest {
             plaintext.toByteArray(Charsets.UTF_8), iv = iv,
         )
         assertEquals(
-            "00006699000000000007000000070000005e3031323334353637383961621960699e582949ab39211286b4eb91c0a2bd405f5282246107fb141610fab2e4d9d58c73a1b6b8ef301af890e141a4b900938a107efb4eb841d994321b66c2f0478cd3b3916df1ada9d7c36cc7aeb1e64c2100009966",
+            "00006699000000000007000000070000006d303132333435363738396162516c38fb2e602d89030377e484daa388b4ec131e23df673946fa134046a0e8bacecf993fbaedebbb644faec7b918feab00939a4237e843f353d886385f2487b9189591b12b13fdc466bb000d2b9f2af999a134657804d53382f36628f48e2d438c00009966",
             TuyaCrypto.toHex(frame),
         )
     }
@@ -58,7 +82,7 @@ class ProtocolVectorTest {
             plaintext.toByteArray(Charsets.UTF_8), returnCode = 0, iv = iv,
         )
         assertEquals(
-            "00006699000000000008000000080000006230313233343536373839616262420dfb554249ec754a13c6bef8c691a6b9445b5e8e73345ca6101214f6bee89c91c76da1a0abac2210f997e141a4b91c81de5021fb10b310ca8c734d2595af4e8394a77454c43d5b3fbe57e279a439fcf618a54ebc00009966",
+            "00006699000000000008000000080000007130313233343536373839616262420dfb1d4e1889030377e484daa3f39688761348df20752dfb534a55f7b9becacb9d33b6babee0394baac3b514f2ee44d8844221fb00e159d981385f2487a50ac1d1ee2b4df69575a3415b68c875f0964be6dd4b96931b092d201d7ca3ba2916b1c2b28200009966",
             TuyaCrypto.toHex(frame),
         )
     }

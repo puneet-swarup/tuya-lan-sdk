@@ -173,7 +173,8 @@ def pack_6699(key, seq, cmd, payload, retcode=None, iv=None, aad_override=None):
     """
     if len(key) != 16:
         raise ValueError("local key must be 16 bytes")
-    raw = payload if retcode is None else struct.pack(">I", retcode) + payload
+    body = payload if cmd in NO_VERSION_HEADER_CMDS else version_header("3.5") + payload
+    raw = body if retcode is None else struct.pack(">I", retcode) + body
     length = 12 + len(raw) + 16
     header = struct.pack(HEADER_FMT_6699, 0x00006699, 0, seq, cmd, length)
     aad = header[4:] if aad_override is None else aad_override
@@ -200,6 +201,9 @@ def unpack_6699(frame, key, retcode_policy="auto"):
     tag = frame[HEADER_LEN_6699 + length - 16:HEADER_LEN_6699 + length]
     raw = _gcm_decrypt(key, iv, ct, tag, aad)
     retcode, body = split_retcode(raw, retcode_policy)
+    expected_header = version_header("3.5")
+    if cmd not in NO_VERSION_HEADER_CMDS and body.startswith(expected_header):
+        body = body[len(expected_header):]
     return {
         "prefix": prefix,
         "reserved": reserved,
@@ -221,7 +225,7 @@ def split_retcode(raw, policy="auto"):
     # auto: a body that already starts with JSON or a 3.x header has no retcode
     if raw[:1] == b"{" or raw[3:4] == b"." or raw[:1] == b"[":
         return None, raw
-    if len(raw) > 4 and (raw[4:5] in (b"{", b"[") or raw[7:8] == b"."):
+    if len(raw) > 4 and (raw[4:5] in (b"{", b"[") or raw[5:6] == b"."):
         return struct.unpack(">I", raw[:4])[0], raw[4:]
     return None, raw
 
@@ -371,12 +375,16 @@ def selftest():
 
     # --- 6699 round trip
     frame = pack_6699(TEST_KEY, 7, CMD_CONTROL, TEST_JSON, iv=TEST_IV)
-    check("6699 frame length field", struct.unpack(HEADER_FMT_6699, frame[:18])[4] == 12 + len(TEST_JSON) + 16)
-    check("6699 total size", len(frame) == 18 + 12 + len(TEST_JSON) + 16 + 4)
+    check("6699 frame length field", struct.unpack(HEADER_FMT_6699, frame[:18])[4] == 12 + 15 + len(TEST_JSON) + 16)
+    check("6699 total size", len(frame) == 18 + 12 + 15 + len(TEST_JSON) + 16 + 4)
     parsed = unpack_6699(frame, TEST_KEY)
     check("6699 payload round trip", parsed["payload"] == TEST_JSON, parsed["payload"])
     check("6699 seq/cmd", parsed["seq"] == 7 and parsed["cmd"] == CMD_CONTROL)
     check("6699 no retcode", parsed["retcode"] is None)
+
+    query_frame = pack_6699(TEST_KEY, 9, CMD_DP_QUERY, TEST_JSON, iv=TEST_IV)
+    query_raw = _gcm_decrypt(TEST_KEY, query_frame[18:30], query_frame[30:-4-16], query_frame[-4-16:-4], query_frame[4:18])
+    check("6699 DP_QUERY omits version header", query_raw == TEST_JSON)
 
     # --- 6699 with retcode
     frame_rc = pack_6699(TEST_KEY, 8, CMD_STATUS, TEST_JSON, retcode=0, iv=TEST_IV)

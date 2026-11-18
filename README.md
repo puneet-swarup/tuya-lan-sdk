@@ -37,7 +37,7 @@ await using var device = new TuyaLocalDevice(new TuyaDeviceOptions
 {
     Host = "192.168.1.42",
     DeviceId = "eb0123456789abcdefghij",
-    LocalKey = "0123456789abcdef",
+    LocalKey = "0123456789abcdef", // or LocalKeyBytes = keyBytes for exact binary keys
     Version = TuyaProtocolVersion.V35,
 });
 
@@ -103,14 +103,9 @@ simulator — and drives handshake → DP_QUERY → CONTROL → status push → 
 both languages, including the two firmware quirks it has to absorb (a return code
 prefixed to the handshake reply, and a return code on data frames).
 
-**Not checked here.** This environment has no .NET SDK and no JDK, so neither the
-C# nor the Kotlin project has been compiled, and no code has been run against a
-real Tuya device. Compile both before relying on them, and treat the first run
-against hardware as a validation step — `dotnet test` and `./gradlew
-:tuya-lan:test` will confirm the protocol core matches the reference model, and a
-device will confirm the parts only hardware can confirm (handshake timing, whether
-your firmware sends a return code, whether it answers `DP_QUERY` or only
-`DP_QUERY_NEW`).
+**Build and simulator verification.** The .NET 8 test suite and Android Gradle library tests have been run in the development environment. The Python reference self-test and simulated-device round-trip test also pass. These checks validate the protocol implementation but do not replace device-specific hardware verification.
+
+**Hardware verification.** A local device at `192.168.1.17` was reachable on TCP 6668. A full authenticated session and relay OFF/ON verification has not yet been completed; do not treat network reachability as proof of successful control.
 
 **Deliberately not covered.** Device provisioning (AP config, token bind),
 gateway sub-protocols beyond the `cid` field, and category-specific DP encodings

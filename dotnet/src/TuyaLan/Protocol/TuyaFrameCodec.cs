@@ -74,7 +74,7 @@ public static class TuyaFrameCodec
     {
         TuyaCrypto.ValidateKey(key);
         return version.UsesGcm()
-            ? Pack6699(key, sequenceNumber, command, plaintext, returnCode, iv)
+            ? Pack6699(version, key, sequenceNumber, command, plaintext, returnCode, iv)
             : Pack55Aa(version, key, sequenceNumber, command, plaintext, returnCode, headerMode);
     }
 
@@ -149,6 +149,7 @@ public static class TuyaFrameCodec
     // ---------------------------------------------------------------- 3.5
 
     private static byte[] Pack6699(
+        TuyaProtocolVersion version,
         ReadOnlySpan<byte> key,
         uint sequenceNumber,
         uint command,
@@ -156,7 +157,10 @@ public static class TuyaFrameCodec
         uint? returnCode,
         byte[]? iv)
     {
-        int rawLength = plaintext.Length + (returnCode.HasValue ? 4 : 0);
+        bool carriesHeader = TuyaCommand.CarriesVersionHeader(command);
+        byte[] versionHeader = version.BuildVersionHeader();
+        int payloadLength = plaintext.Length + (carriesHeader ? versionHeader.Length : 0);
+        int rawLength = payloadLength + (returnCode.HasValue ? 4 : 0);
         var raw = new byte[rawLength];
         int offset = 0;
         if (returnCode.HasValue)
@@ -165,6 +169,11 @@ public static class TuyaFrameCodec
             offset = 4;
         }
 
+        if (carriesHeader)
+        {
+            versionHeader.CopyTo(raw.AsSpan(offset));
+            offset += versionHeader.Length;
+        }
         plaintext.CopyTo(raw.AsSpan(offset));
 
         int length = TuyaCrypto.GcmNonceSize + rawLength + TuyaCrypto.GcmTagSize;
@@ -223,6 +232,12 @@ public static class TuyaFrameCodec
 
         var raw = TuyaCrypto.AesGcmDecrypt(key, nonce, ciphertext, tag, associatedData);
         var (returnCode, payload) = SplitReturnCode(raw, retcodePolicy);
+        if (TuyaCommand.CarriesVersionHeader(command))
+        {
+            byte[] expectedHeader = TuyaProtocolVersion.V35.BuildVersionHeader();
+            if (payload.Length >= expectedHeader.Length && payload.AsSpan(0, expectedHeader.Length).SequenceEqual(expectedHeader))
+                payload = payload[expectedHeader.Length..];
+        }
 
         return new TuyaMessage
         {
