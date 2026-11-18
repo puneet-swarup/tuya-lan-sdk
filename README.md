@@ -1,11 +1,11 @@
 # Tuya LAN SDK — C# (.NET 8) and Kotlin (Android)
 
-A dependency-light implementation of the **Tuya LAN protocol 3.5** (plus 3.4 and
-3.3 for older firmware) and the **Tuya Cloud API**, in two parallel libraries
-that share one wire format and one set of test vectors.
-
-* Local control over TCP 6668: AES-128-GCM frames, per-connection session keys,
-  data points, status pushes, heartbeat, discovery.
+[![CI](https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/puneet-swarup/tuya-lan-sdk)](https://github.com/puneet-swarup/tuya-lan-sdk/releases)
+[![License](https://img.shields.io/github/license/puneet-swarup/tuya-lan-sdk)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![Kotlin](https://img.shields.io/badge/Kotlin-Android-7F52FF)](https://kotlinlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://www.python.org/)
 * Cloud control over HTTPS: token management, device list, status, commands,
   all HMAC-SHA256 signed.
 * No Tuya SDK, no Tuya app, no third-party protocol library.
@@ -92,7 +92,7 @@ Be clear about what has and has not been checked:
 independently — once in `tools/reference_impl.py` and once in each of the C# and
 Kotlin libraries — and the vectors in `docs/05-test-vectors.md` are generated from
 the Python implementation. `python3 tools/reference_impl.py --selftest` passes all
-18 of its checks, including a byte-exact match against **Tuya's own published
+19 of its checks, including a byte-exact match against **Tuya's own published
 cloud signature example**, and against the official discovery key
 `MD5("yGAdlopoPVldABfn")`.
 
@@ -105,7 +105,7 @@ prefixed to the handshake reply, and a return code on data frames).
 
 **Build and simulator verification.** The .NET 8 test suite and Android Gradle library tests have been run in the development environment. The Python reference self-test and simulated-device round-trip test also pass. These checks validate the protocol implementation but do not replace device-specific hardware verification.
 
-**Hardware verification.** A local device at `192.168.1.17` was reachable on TCP 6668. A full authenticated session and relay OFF/ON verification has not yet been completed; do not treat network reachability as proof of successful control.
+**Hardware verification.** Hardware verification is not yet complete. The automated simulator and protocol tests do not establish compatibility with every device model or firmware revision. Before relying on the SDK in production, verify an authenticated session and device-specific DP control against the target hardware.
 
 **Deliberately not covered.** Device provisioning (AP config, token bind),
 gateway sub-protocols beyond the `cid` field, and category-specific DP encodings
