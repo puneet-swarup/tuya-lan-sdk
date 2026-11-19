@@ -1,6 +1,6 @@
 # C# / .NET guide
 
-Target framework: **net8.0** (`AesGcm` is a .NET Core 3.0+ type and is not
+Target framework: **net10.0** (`AesGcm` is a .NET Core 3.0+ type and is not
 available on `netstandard2.0` or .NET Framework). On .NET Framework, replace the
 two `AesGcm` calls in `TuyaCrypto` with BouncyCastle's `GcmBlockCipher`; every
 other part of the library is framework-neutral.

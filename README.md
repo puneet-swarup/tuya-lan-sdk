@@ -1,9 +1,9 @@
-# Tuya LAN SDK — C# (.NET 8) and Kotlin (Android)
+# Tuya LAN SDK — C# (.NET 10) and Kotlin (Android)
 
 [![CI](https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/puneet-swarup/tuya-lan-sdk)](https://github.com/puneet-swarup/tuya-lan-sdk/releases)
 [![License](https://img.shields.io/github/license/puneet-swarup/tuya-lan-sdk)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-Android-7F52FF)](https://kotlinlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://www.python.org/)
 * Cloud control over HTTPS: token management, device list, status, commands,
@@ -18,7 +18,7 @@ tuya-lan-sdk/
 │   ├── 03-android-guide.md    Kotlin usage
 │   ├── 04-cloud-api.md        cloud signing and endpoints
 │   └── 05-test-vectors.md     known-answer vectors
-├── dotnet/                    .NET 8 library, console demo, xunit tests
+├── dotnet/                    .NET 10 library, console demo, xUnit tests
 ├── android/                   Android library module, sample app, JVM tests
 └── tools/
     ├── reference_impl.py      independent Python implementation + vector generator
@@ -103,7 +103,7 @@ simulator — and drives handshake → DP_QUERY → CONTROL → status push → 
 both languages, including the two firmware quirks it has to absorb (a return code
 prefixed to the handshake reply, and a return code on data frames).
 
-**Build and simulator verification.** The .NET 8 test suite and Android Gradle library tests have been run in the development environment. The Python reference self-test and simulated-device round-trip test also pass. These checks validate the protocol implementation but do not replace device-specific hardware verification.
+**Build and simulator verification.** The .NET 10 test suite and Android Gradle library tests have been run in the development environment. The Python reference self-test and simulated-device round-trip test also pass. These checks validate the protocol implementation but do not replace device-specific hardware verification.
 
 **Hardware verification.** Hardware verification is not yet complete. The automated simulator and protocol tests do not establish compatibility with every device model or firmware revision. Before relying on the SDK in production, verify an authenticated session and device-specific DP control against the target hardware.
 

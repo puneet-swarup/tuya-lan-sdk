@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.tuyalan"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
