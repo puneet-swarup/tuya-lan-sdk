@@ -33,7 +33,7 @@ android {
 
 dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    api("com.squareup.okhttp3:okhttp:4.12.0")
+    api("com.squareup.okhttp3:okhttp:5.5.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
