@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a capability the library does not have
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that the library makes hard or impossible?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you have in mind
+      description: An API sketch, a command name, whatever helps.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you have tried
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope
+      options:
+        - label: This is device provisioning / AP config (explicitly out of scope today)
+        - label: This is a gateway sub-protocol beyond `cid` (explicitly out of scope today)
+        - label: This is a category-specific DP encoding, e.g. colour strings or IR codes

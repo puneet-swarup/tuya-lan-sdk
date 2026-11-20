@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/puneet-swarup/tuya-lan-sdk/security/advisories/new
+    about: Please report vulnerabilities privately, not as a public issue.
+  - name: Protocol notes
+    url: https://github.com/puneet-swarup/tuya-lan-sdk/blob/main/docs/01-protocol-3.5.md
+    about: The wire format, if you want to check something before filing.

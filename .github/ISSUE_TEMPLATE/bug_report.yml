@@ -1,0 +1,53 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not paste your local key, device id or any credential.** Redact it.
+        If the issue is security-related, use the private advisory link instead.
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which part
+      options:
+        - .NET client (TuyaLan)
+        - Android client (tuya-lan)
+        - Cloud client
+        - Python tools (reference_impl / fake_device / device_console)
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The smallest sequence that shows it. Code, commands, or a device_console `--try` transcript.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and firmware
+      description: Model or category, protocol version (3.3 / 3.4 / 3.5), and how you got the local key.
+      placeholder: "e.g. 3.5 plug, DP 1 = switch, key from the Smart Life app"
+  - type: input
+    id: toolchain
+    attributes:
+      label: Toolchain
+      placeholder: "e.g. .NET 10.0.100 on Windows 11, or Android SDK 36 / AGP 9.2"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or errors
+      description: Exceptions, console output, or `tools/device_console.py --try` results. Redact keys.
+      render: shell
