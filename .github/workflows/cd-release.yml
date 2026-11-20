@@ -8,11 +8,11 @@ jobs:
   publish-nuget:
     name: Publish .NET to NuGet
     runs-on: ubuntu-latest
-    # id-token lets this job ask GitHub for a signed OIDC token; nuget.org
-    # exchanges it for a one-hour API key. No long-lived key is stored.
+    # id-token: OIDC token for trusted publishing (nuget.org swaps it for a
+    # one-hour key). contents: write: attach the .nupkg to the release.
     permissions:
       id-token: write
-      contents: read
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,3 +46,46 @@ jobs:
           --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+      # A download that works without a package manager, and a permanent copy
+      # if the package is ever unlisted.
+      - name: Attach the package to the release
+        run: gh release upload "${{ github.event.release.tag_name }}" ./nupkg/*.nupkg --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  attach-android:
+    name: Attach the Android AAR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Build the library
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew :tuya-lan:assembleRelease --no-daemon
+
+      - name: Name the artifact after the tag
+        run: |
+          cp android/tuya-lan/build/outputs/aar/tuya-lan-release.aar \
+             "tuya-lan-${{ github.event.release.tag_name }}.aar"
+
+      - name: Attach the AAR to the release
+        run: gh release upload "${{ github.event.release.tag_name }}" tuya-lan-*.aar --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
