@@ -46,7 +46,7 @@ dotnet add package TuyaLan
 ```
 
 ```kotlin
-implementation("com.tuyalan:tuya-lan:1.1.0")
+implementation("com.tuyalan:tuya-lan:2.0.0")
 ```
 
 Neither package is published to NuGet or Maven Central yet — that needs the

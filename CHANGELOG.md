@@ -4,11 +4,18 @@ All notable changes to this project are recorded here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Releases before 1.1.0 predate this file; `git log` is the record for those.
+Releases before 2.0.0 predate this file; `git log` is the record for those.
 
 ## [Unreleased]
 
-## [1.1.0]
+## [2.0.0] - 2026-11-21
+
+Major rather than minor because the control-body fix changes behaviour:
+`SetDpsAsync` / `setDp` can now throw where they used to return silently, and
+3.4/3.5 control frames are built differently. A device whose firmware somehow
+accepted the legacy body on 3.4/3.5 will now be sent the modern one — set
+`ProtocolNumber` to match what it wants, or use `tools/device_console.py --try`
+to find out.
 
 ### Fixed
 

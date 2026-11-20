@@ -27,8 +27,8 @@ all it takes.
 ### Releasing
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 Then publish a release on GitHub for that tag. The `cd-release.yml` workflow
@@ -38,7 +38,7 @@ To pack locally first and check what goes in:
 
 ```bash
 dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj -c Release -o ./nupkg
-unzip -l nupkg/TuyaLan.1.1.0.nupkg
+unzip -l nupkg/TuyaLan.2.0.0.nupkg
 ```
 
 The package should contain `lib/net10.0/TuyaLan.dll`, the XML docs, `README.md`
@@ -72,7 +72,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.tuyalan"
                 artifactId = "tuya-lan"
-                version = "1.1.0"
+                version = "2.0.0"
 
                 pom {
                     name.set("Tuya LAN SDK for Android")

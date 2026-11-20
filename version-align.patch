@@ -1,0 +1,84 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 742a55c..a872389 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,11 +4,18 @@ All notable changes to this project are recorded here. The format follows
+ [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
+ [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+ 
+-Releases before 1.1.0 predate this file; `git log` is the record for those.
++Releases before 2.0.0 predate this file; `git log` is the record for those.
+ 
+ ## [Unreleased]
+ 
+-## [1.1.0]
++## [2.0.0] - 2026-11-21
++
++Major rather than minor because the control-body fix changes behaviour:
++`SetDpsAsync` / `setDp` can now throw where they used to return silently, and
++3.4/3.5 control frames are built differently. A device whose firmware somehow
++accepted the legacy body on 3.4/3.5 will now be sent the modern one — set
++`ProtocolNumber` to match what it wants, or use `tools/device_console.py --try`
++to find out.
+ 
+ ### Fixed
+ 
+diff --git a/README.md b/README.md
+index fc09566..35559fc 100644
+--- a/README.md
++++ b/README.md
+@@ -46,7 +46,7 @@ dotnet add package TuyaLan
+ ```
+ 
+ ```kotlin
+-implementation("com.tuyalan:tuya-lan:1.1.0")
++implementation("com.tuyalan:tuya-lan:2.0.0")
+ ```
+ 
+ Neither package is published to NuGet or Maven Central yet — that needs the
+diff --git a/docs/07-publishing.md b/docs/07-publishing.md
+index 9738178..4e2219e 100644
+--- a/docs/07-publishing.md
++++ b/docs/07-publishing.md
+@@ -27,8 +27,8 @@ all it takes.
+ ### Releasing
+ 
+ ```bash
+-git tag v1.1.0
+-git push origin v1.1.0
++git tag v2.0.0
++git push origin v2.0.0
+ ```
+ 
+ Then publish a release on GitHub for that tag. The `cd-release.yml` workflow
+@@ -38,7 +38,7 @@ To pack locally first and check what goes in:
+ 
+ ```bash
+ dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj -c Release -o ./nupkg
+-unzip -l nupkg/TuyaLan.1.1.0.nupkg
++unzip -l nupkg/TuyaLan.2.0.0.nupkg
+ ```
+ 
+ The package should contain `lib/net10.0/TuyaLan.dll`, the XML docs, `README.md`
+@@ -72,7 +72,7 @@ afterEvaluate {
+                 from(components["release"])
+                 groupId = "com.tuyalan"
+                 artifactId = "tuya-lan"
+-                version = "1.1.0"
++                version = "2.0.0"
+ 
+                 pom {
+                     name.set("Tuya LAN SDK for Android")
+diff --git a/dotnet/src/TuyaLan/TuyaLan.csproj b/dotnet/src/TuyaLan/TuyaLan.csproj
+index 4820d58..b541199 100644
+--- a/dotnet/src/TuyaLan/TuyaLan.csproj
++++ b/dotnet/src/TuyaLan/TuyaLan.csproj
+@@ -10,7 +10,7 @@
+     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+     <NoWarn>$(NoWarn);CS1591</NoWarn>
+     <PackageId>TuyaLan</PackageId>
+-    <Version>1.1.0</Version>
++    <Version>2.0.0</Version>
+     <Title>Tuya LAN SDK</Title>
+     <Authors>Puneet Swarup</Authors>
+     <Company>Puneet Swarup</Company>
