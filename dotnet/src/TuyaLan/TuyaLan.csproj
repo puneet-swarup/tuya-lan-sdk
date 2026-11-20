@@ -10,15 +10,23 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>TuyaLan</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.1.0</Version>
+    <Title>Tuya LAN SDK</Title>
+    <Authors>Puneet Swarup</Authors>
+    <Company>Puneet Swarup</Company>
+    <Copyright>Copyright (c) 2026 Puneet Swarup</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/puneet-swarup/tuya-lan-sdk</PackageProjectUrl>
     <RepositoryUrl>https://github.com/puneet-swarup/tuya-lan-sdk</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>tuya;lan;iot;smart-plug;android</PackageTags>
-    <Description>Tuya LAN protocol (3.3 / 3.4 / 3.5) and Tuya Cloud API client for .NET.</Description>
+    <PackageTags>tuya;lan;iot;smart-home;smart-plug;switch;android;dotnet</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>See CHANGELOG.md in the repository.</PackageReleaseNotes>
+    <Description>Tuya LAN protocol (3.3 / 3.4 / 3.5) and Tuya Cloud API client for .NET. Discover devices, negotiate the session key, read and set data points, and subscribe to status pushes, without the Tuya SDK or the Tuya app.</Description>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../../assets/icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

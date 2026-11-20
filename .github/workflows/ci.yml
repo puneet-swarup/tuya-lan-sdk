@@ -31,6 +31,10 @@ jobs:
       - name: Test
         run: dotnet test dotnet/TuyaLan.sln --no-build --configuration Release --verbosity normal
 
+      # Catches packaging problems (icon, readme, metadata) before a release does.
+      - name: Pack
+        run: dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
+
   # ---------------------------------------------------------
   # 2. Android (Kotlin) Build & Test
   # ---------------------------------------------------------

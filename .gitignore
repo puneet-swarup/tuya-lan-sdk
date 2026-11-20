@@ -19,3 +19,11 @@ artifacts/
 bugfixes.patch
 tuya-lan-sdk-fixes.zip
 sdk-control-fix.patch
+
+# Packaging
+nupkg/
+*.nupkg
+*.snupkg
+
+# IDE
+.vs/
