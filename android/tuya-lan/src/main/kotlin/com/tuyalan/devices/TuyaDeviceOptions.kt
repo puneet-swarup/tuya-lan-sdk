@@ -32,6 +32,12 @@ data class TuyaDeviceOptions(
     val enableHeartbeat: Boolean = true,
     /** Whether control commands should wait for the device to acknowledge. */
     val waitForControlAck: Boolean = true,
+    /**
+     * Value of the `protocol` field in 3.4/3.5 control bodies. 3.4 and 3.5 firmware
+     * expects `{"protocol":N,"t":...,"data":{"dps":{...}}}`; N is 5 on the devices
+     * tested here, some report 4. Unused on 3.3, which sends `{devId,uid,t,dps}`.
+     */
+    val protocolNumber: Int = 5,
     /** How to treat a leading return code when decoding replies. */
     val retcodePolicy: RetcodePolicy = RetcodePolicy.AUTO,
     /** Where the 15-byte version header goes for 3.3/3.4 frames. */

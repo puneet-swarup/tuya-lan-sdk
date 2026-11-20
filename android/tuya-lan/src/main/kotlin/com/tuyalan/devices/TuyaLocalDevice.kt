@@ -75,7 +75,8 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     private var heartbeatJob: Job? = null
 
     private val requestMutex = Mutex()
-    private var pending: PendingRequest? = null
+    private val writeMutex = Mutex()
+    @Volatile private var pending: PendingRequest? = null
 
     private val readBuffer = ByteArray(16 * 1024)
     private var readLength = 0
@@ -143,6 +144,17 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
             runCatching { socket?.soTimeout = options.commandTimeoutMillis.toInt() }
             try {
                 negotiateSessionKey()
+            } catch (failure: Throwable) {
+                // A failed handshake (wrong local key, wrong protocol version, a silent
+                // device) must not leave a half-open socket behind: isConnected would
+                // still report true and the next connect() would throw "already connected".
+                runCatching { socket?.close() }
+                socket = null
+                input = null
+                output = null
+                readLength = 0
+                session.clearSessionKey()
+                throw failure
             } finally {
                 runCatching { socket?.soTimeout = 0 }
             }
@@ -157,6 +169,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     /** Closes the connection and stops the background loops. */
     suspend fun disconnect() {
         scope?.cancel()
+        scope = null
         heartbeatJob = null
         receiveJob = null
         withContext(Dispatchers.IO) { runCatching { socket?.close() } }
@@ -199,12 +212,32 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     /** Sends one or more data points and waits for the device to acknowledge. */
     suspend fun setDps(dps: Map<String, Any?>) {
         val payload = buildControlPayload(dps)
-        sendRequest(
+        val reply = sendRequest(
             controlCommand,
             payload,
             setOf(TuyaCommand.CONTROL, TuyaCommand.CONTROL_NEW, TuyaCommand.STATUS, TuyaCommand.DP_QUERY_NEW),
             tolerateTimeout = !options.waitForControlAck,
         )
+        throwIfErrorReply(reply)
+    }
+
+    /**
+     * Tuya firmware answers a frame it cannot use with a short plain-text complaint
+     * inside an otherwise normal reply - "data format error", "json obj data unvalid".
+     * Without this check a rejected control looks exactly like a successful one.
+     */
+    private fun throwIfErrorReply(message: TuyaMessage) {
+        val payload = message.payload
+        if (payload.isEmpty() || payload.size > 64) return
+
+        val text = String(payload, Charsets.UTF_8)
+        if (text.trimStart().startsWith("{")) return
+
+        for (marker in listOf("error", "unvalid", "invalid", "fail", "not support")) {
+            if (text.contains(marker, ignoreCase = true)) {
+                throw TuyaProtocolException("the device rejected the control frame: $text")
+            }
+        }
     }
 
     /** Sets a single boolean data point, e.g. a switch. */
@@ -326,9 +359,14 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     private suspend fun write(frame: ByteArray) = withContext(Dispatchers.IO) {
-        val stream = output ?: throw IllegalStateException("the device is not connected; call connect() first")
-        stream.write(frame)
-        stream.flush()
+        // All writes are serialised: the heartbeat loop writes outside requestMutex,
+        // and an OutputStream gives no atomicity guarantee for concurrent writes, so
+        // two frames could otherwise interleave on the wire and corrupt both.
+        writeMutex.withLock {
+            val stream = output ?: throw IllegalStateException("the device is not connected; call connect() first")
+            stream.write(frame)
+            stream.flush()
+        }
     }
 
     private suspend fun readFrame(): TuyaRawFrame = withContext(Dispatchers.IO) {
@@ -412,11 +450,22 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         val dpsObject = JSONObject()
         for ((key, value) in dps) dpsObject.put(key, value ?: JSONObject.NULL)
 
+        val now = System.currentTimeMillis() / 1000
         val payload = JSONObject()
-            .put("devId", options.deviceId)
-            .put("uid", options.deviceId)
-            .put("t", System.currentTimeMillis() / 1000)
-            .put("dps", dpsObject)
+        if (options.version.usesSessionKey) {
+            // 3.4/3.5: {"protocol":N,"t":...,"data":{"dps":{...}}}.
+            // The legacy {devId,uid,t,dps} body is answered with "data format error"
+            // and the data point never changes - verified against 3.5 hardware,
+            // where queries kept working and made it look like a dead control path.
+            payload.put("protocol", options.protocolNumber)
+            payload.put("t", now)
+            payload.put("data", JSONObject().put("dps", dpsObject))
+        } else {
+            payload.put("devId", options.deviceId)
+            payload.put("uid", options.deviceId)
+            payload.put("t", now)
+            payload.put("dps", dpsObject)
+        }
         options.cid?.let { payload.put("cid", it) }
         return payload.toString().toByteArray(Charsets.UTF_8)
     }

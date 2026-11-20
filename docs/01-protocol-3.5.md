@@ -146,11 +146,27 @@ Query (no version header):
 {"gwId":"eb0123456789abcdefghij","devId":"eb0123456789abcdefghij","uid":"eb0123456789abcdefghij","t":1700000000}
 ```
 
-Control (version header prefixed before encryption):
+Control on 3.1-3.3 (version header prefixed before encryption):
 
 ```json
 {"devId":"eb0123456789abcdefghij","uid":"eb0123456789abcdefghij","t":1700000000,"dps":{"1":true}}
 ```
+
+Control on **3.4 and 3.5** uses a different body - no `devId`/`uid`, the data
+points move inside `data`, and a `protocol` number is added:
+
+```json
+{"protocol":5,"t":1700000000,"data":{"dps":{"1":true}}}
+```
+
+This is not cosmetic. A 3.5 plug tested against this library answered the legacy
+body with `data format error` and never changed the data point, while queries
+kept working - so a wrong body looks like a dead control path rather than a
+rejected one. `TuyaDeviceOptions.ProtocolNumber` / `TuyaDeviceOptions.protocolNumber`
+controls the `protocol` value (5 on the devices tested; some firmware reports 4).
+A device that cannot use a control frame usually says so in a short plain-text
+reply rather than failing silently, so both clients now raise
+`TuyaProtocolException` when a control reply is an error string.
 
 A status reply is either a bare `{"dps":{...}}` or a wrapper
 `{"devId":"...","t":...,"data":{"dps":{...}}}`; some gateways double-encode the

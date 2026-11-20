@@ -191,10 +191,18 @@ class FakeDevice:
             print("  !! could not parse control payload: %r" % body[:64])
             return
 
+        # 3.1-3.3 put dps at the top level; 3.4/3.5 wrap it in data.dps.
+        dps = data.get("dps")
+        if not isinstance(dps, dict) and isinstance(data.get("data"), dict):
+            dps = data["data"].get("dps")
+        if not isinstance(dps, dict):
+            print("  !! control payload carried no dps: %r" % body[:80])
+            return
+
         with self.lock:
-            for key, value in data.get("dps", {}).items():
+            for key, value in dps.items():
                 self.dps[str(key)] = value
-        print("  dp update: %s" % json.dumps(data.get("dps", {})))
+        print("  dp update: %s" % json.dumps(dps))
 
     def status_payload(self):
         with self.lock:

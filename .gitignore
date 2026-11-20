@@ -14,3 +14,8 @@ build/
 __pycache__/
 *.pyc
 artifacts/
+
+.forge-permissions.json
+bugfixes.patch
+tuya-lan-sdk-fixes.zip
+sdk-control-fix.patch

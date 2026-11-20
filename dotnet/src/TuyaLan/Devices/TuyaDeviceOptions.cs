@@ -46,6 +46,14 @@ public sealed class TuyaDeviceOptions
     /// <summary>Whether control commands should wait for the device to acknowledge.</summary>
     public bool WaitForControlAck { get; set; } = true;
 
+    /// <summary>Value of the <c>protocol</c> field in 3.4/3.5 control bodies.</summary>
+    /// <remarks>
+    /// 3.4 and 3.5 firmware expects <c>{"protocol":N,"t":...,"data":{"dps":{...}}}</c>.
+    /// N is 5 on the devices tested here; some report 4. It is not used on 3.3,
+    /// which sends the older <c>{devId,uid,t,dps}</c> body.
+    /// </remarks>
+    public int ProtocolNumber { get; set; } = 5;
+
     /// <summary>How to treat a leading return code when decoding replies.</summary>
     public RetcodePolicy RetcodePolicy { get; set; } = RetcodePolicy.Auto;
 

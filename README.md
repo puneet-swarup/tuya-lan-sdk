@@ -24,6 +24,7 @@ tuya-lan-sdk/
     ├── reference_impl.py      independent Python implementation + vector generator
     ├── fake_device.py         a working 3.5 device simulator (no hardware needed)
     ├── test_roundtrip.py      end-to-end handshake / control / push test
+    ├── device_console.py      web page + REST API to test on/off on a real plug
     └── test_vectors.json      generated vectors
 ```
 
@@ -73,6 +74,31 @@ lifecycleScope.launch {
 ```bash
 cd android && ./gradlew :tuya-lan:test
 ```
+
+## Validate a real plug
+
+`tools/device_console.py` is a single-file harness that connects to one device
+and switches it, either from a web page or from a JSON endpoint you can call
+from your own code:
+
+```bash
+python3 tools/device_console.py              # http://127.0.0.1:8080
+python3 tools/device_console.py --demo       # with a fake device to click through
+python3 tools/device_console.py --selftest   # end-to-end check, no browser
+```
+
+```bash
+curl -s localhost:8080/api/connect -H 'Content-Type: application/json' -d '{
+  "host": "192.168.1.42", "device_id": "eb0123456789abcdefghij",
+  "local_key": "0123456789abcdef", "version": "3.5"}'
+
+curl -s localhost:8080/api/devices/eb0123456789abcdefghij/switch \
+  -H 'Content-Type: application/json' -d '{"on": true}'
+```
+
+It speaks 3.3, 3.4 and 3.5, reports the data points the device returns, and
+confirms the switch by reading the state back rather than trusting the ack.
+Full endpoint list in [`docs/06-device-console.md`](docs/06-device-console.md).
 
 ## What protocol 3.5 actually is
 

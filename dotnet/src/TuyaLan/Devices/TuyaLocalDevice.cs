@@ -87,6 +87,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     private readonly TuyaDeviceOptions _options;
     private readonly TuyaSession _session;
     private readonly SemaphoreSlim _requestGate = new(1, 1);
+    private readonly SemaphoreSlim _writeGate = new(1, 1);
     private readonly byte[] _readBuffer = new byte[16 * 1024];
 
     private TcpClient? _client;
@@ -94,7 +95,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     private CancellationTokenSource? _lifetime;
     private Task? _receiveLoop;
     private Task? _heartbeatLoop;
-    private PendingRequest? _pending;
+    private volatile PendingRequest? _pending;
     private int _readLength;
     private volatile bool _disposed;
 
@@ -156,9 +157,26 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         _stream = _client.GetStream();
         _readLength = 0;
 
-        if (_options.Version.UsesSessionKey())
+        try
         {
-            await NegotiateSessionKeyAsync(cancellationToken).ConfigureAwait(false);
+            if (_options.Version.UsesSessionKey())
+            {
+                await NegotiateSessionKeyAsync(cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch
+        {
+            // A failed handshake (wrong local key, wrong protocol version, a silent
+            // device) must not leave a half-open socket behind: IsConnected would
+            // still report true and every later ConnectAsync would throw
+            // "already connected" against a socket nobody can use.
+            _stream?.Dispose();
+            _stream = null;
+            _client?.Dispose();
+            _client = null;
+            _session.ClearSessionKey();
+            _readLength = 0;
+            throw;
         }
 
         _lifetime = new CancellationTokenSource();
@@ -245,12 +263,36 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         ArgumentNullException.ThrowIfNull(dps);
 
         var payload = BuildControlPayload(dps);
-        await SendRequestAsync(
+        var reply = await SendRequestAsync(
             ControlCommand,
             payload,
             new[] { ControlCommand, TuyaCommand.Control, TuyaCommand.ControlNew, TuyaCommand.Status, TuyaCommand.DpQueryNew },
             cancellationToken,
             tolerateTimeout: !_options.WaitForControlAck).ConfigureAwait(false);
+
+        ThrowIfErrorReply(reply);
+    }
+
+    /// <summary>
+    /// Tuya firmware answers a frame it cannot use with a short plain-text
+    /// complaint inside an otherwise normal reply - "data format error",
+    /// "json obj data unvalid". Without this check a rejected control looks
+    /// exactly like a successful one: the call returns, nothing changes.
+    /// </summary>
+    private static void ThrowIfErrorReply(TuyaMessage message)
+    {
+        if (message.Payload.Length is 0 or > 64) return;
+
+        string text = Encoding.UTF8.GetString(message.Payload);
+        if (text.TrimStart().StartsWith('{')) return;
+
+        foreach (var marker in new[] { "error", "unvalid", "invalid", "fail", "not support" })
+        {
+            if (text.Contains(marker, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new TuyaProtocolException($"the device rejected the control frame: {text}");
+            }
+        }
     }
 
     /// <summary>Sets a single boolean data point, e.g. a switch.</summary>
@@ -309,6 +351,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         _disposed = true;
         await DisconnectAsync().ConfigureAwait(false);
         _requestGate.Dispose();
+        _writeGate.Dispose();
     }
 
     // ------------------------------------------------------------ internals
@@ -420,9 +463,20 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
 
     private async Task WriteAsync(byte[] frame, CancellationToken cancellationToken)
     {
-        var stream = _stream ?? throw new InvalidOperationException("the device is not connected");
-        await stream.WriteAsync(frame, cancellationToken).ConfigureAwait(false);
-        await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        // All writes are serialised: the heartbeat loop writes outside _requestGate,
+        // and NetworkStream gives no atomicity guarantee for concurrent writes, so
+        // two frames could otherwise interleave on the wire and corrupt both.
+        await _writeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var stream = _stream ?? throw new InvalidOperationException("the device is not connected");
+            await stream.WriteAsync(frame, cancellationToken).ConfigureAwait(false);
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeGate.Release();
+        }
     }
 
     private async Task<TuyaRawFrame> ReadFrameAsync(CancellationToken cancellationToken)
@@ -550,13 +604,27 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
             dpsObject[pair.Key] = pair.Value?.DeepClone();
         }
 
-        var payload = new JsonObject
+        var payload = new JsonObject();
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        if (_options.Version.UsesSessionKey())
         {
-            ["devId"] = _options.DeviceId,
-            ["uid"] = _options.DeviceId,
-            ["t"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            ["dps"] = dpsObject,
-        };
+            // 3.4/3.5: {"protocol":N,"t":...,"data":{"dps":{...}}}.
+            // The legacy {devId,uid,t,dps} body is answered with
+            // "data format error" and the data point never changes - verified
+            // against 3.5 hardware, where queries kept working throughout and
+            // made the rejection look like a dead control path.
+            payload["protocol"] = _options.ProtocolNumber;
+            payload["t"] = now;
+            payload["data"] = new JsonObject { ["dps"] = dpsObject };
+        }
+        else
+        {
+            payload["devId"] = _options.DeviceId;
+            payload["uid"] = _options.DeviceId;
+            payload["t"] = now;
+            payload["dps"] = dpsObject;
+        }
 
         if (!string.IsNullOrEmpty(_options.Cid)) payload["cid"] = _options.Cid;
         return JsonSerializer.SerializeToUtf8Bytes(payload);
