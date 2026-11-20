@@ -69,7 +69,15 @@ def split_frames(buffer):
 
 class FakeDevice:
     def __init__(self, host="0.0.0.0", port=6668, real_key=DEFAULT_KEY,
-                 device_id=DEFAULT_DEVICE_ID, product_key=DEFAULT_PRODUCT_KEY):
+                 device_id=DEFAULT_DEVICE_ID, product_key=DEFAULT_PRODUCT_KEY,
+                 envelope="both"):
+        # envelope: which control body this simulated firmware accepts.
+        #   "both"   - 3.1-3.3 and 3.4/3.5 shapes (default, most forgiving)
+        #   "modern" - only {"protocol":N,"t":...,"data":{"dps":{...}}}
+        #   "legacy" - only {"devId":...,"uid":...,"t":...,"dps":{...}}
+        # Use "modern" to check a 3.4/3.5 client, which is what a real 3.5 plug
+        # enforces: it answers the legacy body with "data format error".
+        self.envelope = envelope
         self.host = host
         self.port = port
         self.real_key = real_key
@@ -159,7 +167,10 @@ class FakeDevice:
             return
 
         if command in (R.CMD_CONTROL, R.CMD_CONTROL_NEW):
-            self.apply_control(payload)
+            if not self.apply_control(payload):
+                # What real firmware does with a body it cannot use.
+                self.send(connection, state, R.CMD_CONTROL, b"data format error")
+                return
             self.send(connection, state, R.CMD_CONTROL, b"")
             self.push_status(connection, state)
             return
@@ -192,17 +203,27 @@ class FakeDevice:
             return
 
         # 3.1-3.3 put dps at the top level; 3.4/3.5 wrap it in data.dps.
-        dps = data.get("dps")
-        if not isinstance(dps, dict) and isinstance(data.get("data"), dict):
-            dps = data["data"].get("dps")
+        modern = (isinstance(data.get("data"), dict)
+                  and isinstance(data["data"].get("dps"), dict))
+        legacy = isinstance(data.get("dps"), dict)
+
+        if self.envelope == "modern" and not modern:
+            print("  !! body is not the 3.4/3.5 one; replying 'data format error'")
+            return False
+        if self.envelope == "legacy" and not legacy:
+            print("  !! body is not the legacy one; replying 'data format error'")
+            return False
+
+        dps = data["data"]["dps"] if modern else data.get("dps")
         if not isinstance(dps, dict):
             print("  !! control payload carried no dps: %r" % body[:80])
-            return
+            return False
 
         with self.lock:
             for key, value in dps.items():
                 self.dps[str(key)] = value
         print("  dp update: %s" % json.dumps(dps))
+        return True
 
     def status_payload(self):
         with self.lock:
@@ -241,13 +262,16 @@ def main(argv):
     parser.add_argument("--port", type=int, default=6668)
     parser.add_argument("--key", default=DEFAULT_KEY.decode())
     parser.add_argument("--device-id", default=DEFAULT_DEVICE_ID)
+    parser.add_argument("--envelope", default="both", choices=["both", "modern", "legacy"],
+                        help="control body this firmware accepts (default both)")
     args = parser.parse_args(argv)
 
     key = args.key.encode("utf-8")
     if len(key) != 16:
         parser.error("--key must be exactly 16 characters")
 
-    FakeDevice(args.host, args.port, key, args.device_id).serve_forever()
+    FakeDevice(args.host, args.port, key, args.device_id,
+               envelope=args.envelope).serve_forever()
     return 0
 
 
