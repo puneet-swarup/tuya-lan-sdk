@@ -1,0 +1,13 @@
+# Keep the tree LF end to end: shell scripts, Gradle wrappers and the patch
+# files in the docs all depend on it, and a mixed tree breaks `git apply` on
+# Windows. Working copies stay LF regardless of core.autocrlf.
+* text=auto eol=lf
+
+# Binary
+*.png    binary
+*.jpg    binary
+*.jar    binary
+*.nupkg  binary
+
+# Generated
+tools/test_vectors.json linguist-generated=true
