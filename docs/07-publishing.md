@@ -15,14 +15,45 @@ all it takes.
 
 ## NuGet
 
-### One-time setup
+### One-time setup: trusted publishing (recommended)
 
-1. Create an account at [nuget.org](https://www.nuget.org/) and sign in.
-2. **Account → API keys → Create**, scope *Push new packages and package versions*,
-   glob `TuyaLan`, expiry as you prefer.
-3. Add the key as a repository secret named `NUGET_API_KEY`
-   (Settings → Secrets and variables → Actions). `.github/workflows/cd-release.yml`
-   already reads it.
+No API key is stored anywhere. GitHub issues a signed OIDC token describing this
+repository and workflow file; nuget.org checks it against a policy and hands back
+a key that lives for one hour.
+
+1. Sign in at [nuget.org](https://www.nuget.org/) and create an account if you
+   have not already.
+2. Open your username menu → **Trusted Publishing** → **Create policy**.
+3. Fill it in exactly:
+
+   | field | value |
+   |---|---|
+   | Name | `GitHub Actions cd-release` |
+   | Package Owner | your account |
+   | Repository Owner | `puneet-swarup` |
+   | Repository | `tuya-lan-sdk` |
+   | Workflow File | `cd-release.yml` |
+   | Environment | leave empty |
+
+   The workflow file is the **file name only**, without `.github/workflows/`.
+   Renaming the file breaks publishing until the policy is updated to match.
+4. Add a repository secret `NUGET_USER` = your nuget.org **profile name**, not
+   your email (Settings → Secrets and variables → Actions).
+
+`.github/workflows/cd-release.yml` is already written for this: it requests
+`id-token: write`, calls `NuGet/login@v1`, and pushes with the key that comes
+back.
+
+### One-time setup: API key (fallback)
+
+If you would rather not use OIDC:
+
+1. **Account → API keys → Create**.
+2. Scope *Push new packages and package versions*; glob `TuyaLan` (the exact
+   package id — `*` would let the key push any package you own).
+3. Add the key as a repository secret named `NUGET_API_KEY`.
+4. Change the last two steps of `cd-release.yml` back to a single push using
+   `--api-key ${{ secrets.NUGET_API_KEY }}`.
 
 ### Releasing
 
@@ -31,8 +62,13 @@ git tag v2.0.0
 git push origin v2.0.0
 ```
 
-Then publish a release on GitHub for that tag. The `cd-release.yml` workflow
-builds, packs and pushes to NuGet with `--skip-duplicate`.
+Then publish a release on GitHub for that tag (Releases → Draft a new release →
+choose the tag → paste the release notes → Publish). The `cd-release.yml`
+workflow builds, packs and pushes to NuGet with `--skip-duplicate`.
+
+Keep it as a **draft** until the policy exists: publishing fires the workflow
+immediately, and a job that fails on a live release is harder to reason about
+than a draft that sits there.
 
 To pack locally first and check what goes in:
 

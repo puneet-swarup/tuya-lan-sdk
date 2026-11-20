@@ -8,6 +8,11 @@ jobs:
   publish-nuget:
     name: Publish .NET to NuGet
     runs-on: ubuntu-latest
+    # id-token lets this job ask GitHub for a signed OIDC token; nuget.org
+    # exchanges it for a one-hour API key. No long-lived key is stored.
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,5 +31,18 @@ jobs:
       - name: Pack NuGet Package
         run: dotnet pack dotnet/TuyaLan.sln --configuration Release --no-build --output ./nupkg
 
+      # Ask for the key as late as possible: it lives for one hour and each
+      # token buys exactly one key.
+      - name: NuGet login (OIDC to short-lived API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          # nuget.org profile name, not the email address
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Publish to NuGet
-        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: >
+          dotnet nuget push ./nupkg/*.nupkg
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
