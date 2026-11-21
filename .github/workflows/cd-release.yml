@@ -3,6 +3,14 @@ name: CD - Publish Release
 on:
   release:
     types: [published]
+  # Manual run, for exactly the case where a release was published before the
+  # workflow was ready: attach the artifacts to an existing tag without cutting
+  # a new release.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to attach the artifacts to (e.g. v2.0.0)'
+        required: true
 
 jobs:
   publish-nuget:
@@ -50,7 +58,7 @@ jobs:
       # A download that works without a package manager, and a permanent copy
       # if the package is ever unlisted.
       - name: Attach the package to the release
-        run: gh release upload "${{ github.event.release.tag_name }}" ./nupkg/*.nupkg --clobber
+        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" ./nupkg/*.nupkg --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,6 +94,6 @@ jobs:
              "tuya-lan-${{ github.event.release.tag_name }}.aar"
 
       - name: Attach the AAR to the release
-        run: gh release upload "${{ github.event.release.tag_name }}" tuya-lan-*.aar --clobber
+        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" tuya-lan-*.aar --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
