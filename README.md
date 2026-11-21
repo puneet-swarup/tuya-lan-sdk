@@ -11,6 +11,7 @@
 <p align="center">
   <a href="https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml"><img src="https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://github.com/puneet-swarup/tuya-lan-sdk/releases"><img src="https://img.shields.io/github/v/release/puneet-swarup/tuya-lan-sdk" alt="Release"></a>
+  <a href="https://www.nuget.org/packages/TuyaLan"><img src="https://img.shields.io/nuget/v/TuyaLan" alt="NuGet"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/puneet-swarup/tuya-lan-sdk" alt="License"></a>
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10">
   <img src="https://img.shields.io/badge/Android-minSdk%2024-3DDC84" alt="Android">
@@ -49,9 +50,13 @@ dotnet add package TuyaLan
 implementation("com.tuyalan:tuya-lan:2.0.0")
 ```
 
-Neither package is published to NuGet or Maven Central yet — that needs the
-account registration done first, and [`docs/07-publishing.md`](docs/07-publishing.md)
-walks through it. Until then, reference the projects directly:
+The .NET package is on [nuget.org](https://www.nuget.org/packages/TuyaLan).
+
+The Android library is **not** on Maven Central yet — that needs the namespace
+and signing set up, and [`docs/07-publishing.md`](docs/07-publishing.md) walks
+through it. Until then, take the `.aar` from the
+[releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases), or
+reference the projects directly:
 
 ```bash
 git clone https://github.com/puneet-swarup/tuya-lan-sdk.git
