@@ -1,7 +1,0 @@
-﻿2026-11-23T11:49:14.3119298Z ##[group]Run gh release upload "v2.1.0" ./nupkg/*.nupkg --clobber
-2026-11-23T11:49:14.3119823Z [36;1mgh release upload "v2.1.0" ./nupkg/*.nupkg --clobber[0m
-2026-11-23T11:49:14.3151878Z shell: /usr/bin/bash -e {0}
-2026-11-23T11:49:14.3152152Z env:
-2026-11-23T11:49:14.3152375Z   DOTNET_ROOT: /usr/share/dotnet
-2026-11-23T11:49:14.3155297Z   GH_TOKEN: ***
-2026-11-23T11:49:14.3155536Z ##[endgroup]

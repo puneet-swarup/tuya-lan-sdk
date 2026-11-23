@@ -1,9 +1,0 @@
-﻿2026-11-23T11:49:10.1785977Z ##[group]Run NuGet/login@v1
-2026-11-23T11:49:10.1786461Z with:
-2026-11-23T11:49:10.1787169Z   user: ***
-2026-11-23T11:49:10.1787691Z   token-service-url: https://www.nuget.org/api/v2/token
-2026-11-23T11:49:10.1818709Z   audience: https://www.nuget.org
-2026-11-23T11:49:10.1819185Z env:
-2026-11-23T11:49:10.1819573Z   DOTNET_ROOT: /usr/share/dotnet
-2026-11-23T11:49:10.1820014Z ##[endgroup]
-2026-11-23T11:49:12.7650601Z Successfully exchanged OIDC token for NuGet API key.

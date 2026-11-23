@@ -27,3 +27,6 @@ nupkg/
 
 # IDE
 .vs/
+cd.zip
+cdl/
+*.zip
