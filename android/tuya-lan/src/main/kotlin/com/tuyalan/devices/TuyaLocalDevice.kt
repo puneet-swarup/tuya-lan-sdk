@@ -68,6 +68,10 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     private var socket: Socket? = null
+
+    /** Set when the receive loop or the heartbeat finds the connection gone. */
+    @Volatile
+    private var disconnected = false
     private var input: InputStream? = null
     private var output: OutputStream? = null
     private var scope: CoroutineScope? = null
@@ -105,16 +109,35 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     /** True once the 3.4/3.5 handshake has completed. */
     val hasSessionKey: Boolean get() = session.hasSessionKey
 
-    /** True while the socket is open. */
+    /**
+     * True while the socket is usable.
+     *
+     * [java.net.Socket.isConnected] only says the socket was connected once; it
+     * stays true after the peer closes. Combined with [java.net.Socket.isClosed],
+     * which is only true when *we* closed it, a connection that died quietly read
+     * as healthy for ever - so a host that cached the device reused a dead socket
+     * and every command timed out. The receive loop and the heartbeat already
+     * notice the death; they now record it here.
+     */
     val isConnected: Boolean
         get() {
+            if (disconnected) return false
             val current = socket ?: return false
             return current.isConnected && !current.isClosed
         }
 
+    /** Connects only if the connection is not usable. */
+    suspend fun ensureConnected() {
+        if (!isConnected) connect()
+    }
+
     /** Opens the TCP connection and negotiates a session key when the version needs one. */
     suspend fun connect() {
-        if (socket != null) throw IllegalStateException("already connected")
+        if (isConnected) throw IllegalStateException("already connected")
+
+        // A connection that died leaves its socket behind; drop it rather than
+        // refuse to connect because of one nobody can use.
+        if (socket != null) disconnect()
 
         withContext(Dispatchers.IO) {
             val newSocket = Socket()
@@ -130,6 +153,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
                 newSocket.close()
                 throw TuyaException("could not connect to ${options.host}:${options.port}: ${e.message}", e)
             }
+            disconnected = false
             socket = newSocket
             input = newSocket.getInputStream()
             output = newSocket.getOutputStream()
@@ -178,6 +202,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         output = null
         session.clearSessionKey()
         readLength = 0
+        disconnected = false
     }
 
     /** Queries the current data points. */
@@ -399,7 +424,10 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
                 dispatch(raw)
             }
         } catch (e: IOException) {
-            if (isConnected) _protocolErrors.tryEmit(TuyaProtocolException("connection lost: ${e.message}", e))
+            if (isConnected) {
+                disconnected = true
+                _protocolErrors.tryEmit(TuyaProtocolException("connection lost: ${e.message}", e))
+            }
         } catch (e: TuyaException) {
             _protocolErrors.tryEmit(e)
         }

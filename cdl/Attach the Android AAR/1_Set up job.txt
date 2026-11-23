@@ -1,0 +1,34 @@
+﻿2026-11-23T11:48:51.1774798Z Current runner version: '2.338.2'
+2026-11-23T11:48:51.1790193Z ##[group]Runner Image Provisioner
+2026-11-23T11:48:51.1790702Z Hosted Compute Agent
+2026-11-23T11:48:51.1791086Z Version: 20261111.635
+2026-11-23T11:48:51.1791489Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-23T11:48:51.1792028Z Build Date: 2026-11-11T01:49:01Z
+2026-11-23T11:48:51.1792447Z Worker ID: {fa47c25a-1323-4139-ba92-9bc448f10998}
+2026-11-23T11:48:51.1792862Z Region: westus3
+2026-11-23T11:48:51.1793200Z Cloud: Azure
+2026-11-23T11:48:51.1793562Z ##[endgroup]
+2026-11-23T11:48:51.1794462Z ##[group]Operating System
+2026-11-23T11:48:51.1794848Z Ubuntu
+2026-11-23T11:48:51.1795146Z 26.04.1
+2026-11-23T11:48:51.1795436Z LTS
+2026-11-23T11:48:51.1795803Z ##[endgroup]
+2026-11-23T11:48:51.1796113Z ##[group]Runner Image
+2026-11-23T11:48:51.1796504Z Image: ubuntu-26.04
+2026-11-23T11:48:51.1796829Z Version: 20261116.202.1
+2026-11-23T11:48:51.1797402Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-23T11:48:51.1798422Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+2026-11-23T11:48:51.1799198Z ##[endgroup]
+2026-11-23T11:48:51.1799802Z ##[group]GITHUB_TOKEN Permissions
+2026-11-23T11:48:51.1801102Z Contents: write
+2026-11-23T11:48:51.1801435Z Metadata: read
+2026-11-23T11:48:51.1801900Z ##[endgroup]
+2026-11-23T11:48:51.1803159Z Secret source: Actions
+2026-11-23T11:48:51.1803672Z Cache mode: write
+2026-11-23T11:48:51.1804269Z Prepare workflow directory
+2026-11-23T11:48:51.1992685Z Prepare all required actions
+2026-11-23T11:48:51.2021546Z Getting action download info
+2026-11-23T11:48:51.4983732Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-23T11:48:51.5797022Z Download action repository 'actions/setup-java@v4' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+2026-11-23T11:48:52.2704124Z Download action repository 'android-actions/setup-android@v3' (SHA:9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407)
+2026-11-23T11:48:52.8174886Z Complete job name: Attach the Android AAR

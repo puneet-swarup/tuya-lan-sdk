@@ -1,0 +1,10 @@
+﻿2026-11-23T11:49:54.4878180Z ##[group]Run gh release upload "v2.1.0" tuya-lan-*.aar --clobber
+2026-11-23T11:49:54.4878427Z [36;1mgh release upload "v2.1.0" tuya-lan-*.aar --clobber[0m
+2026-11-23T11:49:54.4899755Z shell: /usr/bin/bash -e {0}
+2026-11-23T11:49:54.4899887Z env:
+2026-11-23T11:49:54.4900052Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-23T11:49:54.4900302Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-23T11:49:54.4900516Z   ANDROID_HOME: /usr/local/lib/android/sdk
+2026-11-23T11:49:54.4900675Z   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+2026-11-23T11:49:54.4902207Z   GH_TOKEN: ***
+2026-11-23T11:49:54.4902326Z ##[endgroup]

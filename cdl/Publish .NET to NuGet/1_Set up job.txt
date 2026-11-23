@@ -1,0 +1,34 @@
+﻿2026-11-23T11:48:51.2992963Z Current runner version: '2.338.2'
+2026-11-23T11:48:51.3030388Z ##[group]Runner Image Provisioner
+2026-11-23T11:48:51.3031797Z Hosted Compute Agent
+2026-11-23T11:48:51.3033139Z Version: 20261111.635
+2026-11-23T11:48:51.3034304Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-23T11:48:51.3035804Z Build Date: 2026-11-11T01:49:01Z
+2026-11-23T11:48:51.3037116Z Worker ID: {302103f8-77a3-4293-8a43-fc7cfe630eea}
+2026-11-23T11:48:51.3038737Z Region: eastus
+2026-11-23T11:48:51.3039711Z Cloud: Azure
+2026-11-23T11:48:51.3040774Z ##[endgroup]
+2026-11-23T11:48:51.3043464Z ##[group]Operating System
+2026-11-23T11:48:51.3044779Z Ubuntu
+2026-11-23T11:48:51.3045752Z 26.04.1
+2026-11-23T11:48:51.3046687Z LTS
+2026-11-23T11:48:51.3047772Z ##[endgroup]
+2026-11-23T11:48:51.3049160Z ##[group]Runner Image
+2026-11-23T11:48:51.3050360Z Image: ubuntu-26.04
+2026-11-23T11:48:51.3051353Z Version: 20261116.202.1
+2026-11-23T11:48:51.3053369Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-23T11:48:51.3056672Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+2026-11-23T11:48:51.3058773Z ##[endgroup]
+2026-11-23T11:48:51.3060895Z ##[group]GITHUB_TOKEN Permissions
+2026-11-23T11:48:51.3063730Z Contents: write
+2026-11-23T11:48:51.3065093Z Metadata: read
+2026-11-23T11:48:51.3066075Z ##[endgroup]
+2026-11-23T11:48:51.3070123Z Secret source: Actions
+2026-11-23T11:48:51.3072008Z Cache mode: write
+2026-11-23T11:48:51.3073676Z Prepare workflow directory
+2026-11-23T11:48:51.3561425Z Prepare all required actions
+2026-11-23T11:48:51.3610835Z Getting action download info
+2026-11-23T11:48:51.5192441Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-23T11:48:51.6182911Z Download action repository 'actions/setup-dotnet@v4' (SHA:67a3573c9a986a3f9c594539f4ab511d57bb3ce9)
+2026-11-23T11:48:51.7576661Z Download action repository 'NuGet/login@v1' (SHA:8d196754b4036150537f80ac539e15c2f1028841)
+2026-11-23T11:48:51.9538914Z Complete job name: Publish .NET to NuGet

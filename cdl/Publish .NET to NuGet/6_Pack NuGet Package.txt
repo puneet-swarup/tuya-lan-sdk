@@ -1,0 +1,7 @@
+﻿2026-11-23T11:49:08.2810005Z ##[group]Run dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
+2026-11-23T11:49:08.2811532Z [36;1mdotnet pack dotnet/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg[0m
+2026-11-23T11:49:08.2861496Z shell: /usr/bin/bash -e {0}
+2026-11-23T11:49:08.2862301Z env:
+2026-11-23T11:49:08.2862673Z   DOTNET_ROOT: /usr/share/dotnet
+2026-11-23T11:49:08.2863162Z ##[endgroup]
+2026-11-23T11:49:09.4940331Z   Successfully created package '/home/runner/work/tuya-lan-sdk/tuya-lan-sdk/nupkg/TuyaLan.2.1.0.nupkg'.
