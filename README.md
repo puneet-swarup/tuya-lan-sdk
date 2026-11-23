@@ -271,3 +271,29 @@ MIT. See [LICENSE](LICENSE).
 
 This is an independent implementation written from the public reverse-engineering
 record; it is not affiliated with or endorsed by Tuya. Use it on hardware you own.
+
+## Connection lifecycle
+
+A Tuya device accepts **one session at a time**. What the library guarantees,
+and what a host has to do:
+
+| | |
+|---|---|
+| `IsConnected` | authoritative. It turns false as soon as the receive loop or the heartbeat sees the socket go. |
+| `Disconnected` | raised **once** per death, with the exception that caused it. |
+| Reconnection | **not automatic.** The host decides when to retry - a battery-powered host may not want to. |
+| `EnsureConnectedAsync` | connect-if-needed. Call this before an operation rather than caching the device and checking `IsConnected` by hand. |
+
+The failure this section exists to prevent: caching a `TuyaLocalDevice`, letting
+the connection die quietly (router idle timeout, Wi-Fi power save, a device
+reboot, or the host machine sleeping), and then reusing it. Every command times
+out, nothing reconnects, and the device looks unreachable for ever. Before 2.1.0
+`IsConnected` stayed true through all of that.
+
+Two things follow:
+
+- **Enable the heartbeat** if the host is long-running. It is what detects a
+  connection that dies while nothing is being sent.
+- **Drop the device on any failure**, not just when `IsConnected` says so. A
+  command that times out is a strong hint that the socket is gone.
+

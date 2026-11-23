@@ -99,6 +99,9 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     private int _readLength;
     private volatile bool _disposed;
 
+    /// <summary>Set when the receive loop or the heartbeat finds the socket gone.</summary>
+    private volatile bool _disconnected;
+
     public TuyaLocalDevice(TuyaDeviceOptions options)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -125,8 +128,18 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     /// <summary>Protocol revision in use.</summary>
     public TuyaProtocolVersion Version => _session.Version;
 
-    /// <summary>True while the socket is open.</summary>
-    public bool IsConnected => _stream is not null;
+    /// <summary>
+    /// True while the socket is usable.
+    /// </summary>
+    /// <remarks>
+    /// This used to be "the stream object exists", which stayed true after the
+    /// socket died until somebody called <see cref="DisconnectAsync"/>. A host
+    /// that caches the device and checks this - the obvious thing to do - then
+    /// reused a dead connection for ever: every command timed out and nothing
+    /// reconnected. The receive loop and the heartbeat already notice the death;
+    /// they now record it here, so the property answers the question it asks.
+    /// </remarks>
+    public bool IsConnected => _stream is not null && !_disconnected;
 
     /// <summary>True once the 3.4/3.5 handshake has completed. Never log the key itself.</summary>
     public bool HasSessionKey => _session.HasSessionKey;
@@ -135,7 +148,11 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_stream is not null) throw new InvalidOperationException("already connected");
+        if (IsConnected) throw new InvalidOperationException("already connected");
+
+        // A previous connection that died leaves its stream behind. Drop it rather
+        // than refuse to connect because of a socket nobody can use.
+        if (_stream is not null) await DisconnectAsync().ConfigureAwait(false);
 
         _client = new TcpClient { NoDelay = true };
         using (var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
@@ -179,6 +196,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
             throw;
         }
 
+        _disconnected = false;
         _lifetime = new CancellationTokenSource();
         _receiveLoop = Task.Run(() => ReceiveLoopAsync(_lifetime.Token), CancellationToken.None);
         if (_options.EnableHeartbeat)
@@ -188,6 +206,22 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
     }
 
     /// <summary>Closes the connection and stops the background loops.</summary>
+    /// <summary>
+    /// Connects only if the connection is not usable, so callers never have to
+    /// cache the device and guess at its state.
+    /// </summary>
+    /// <remarks>
+    /// This is the call a host should make before every operation. Caching a
+    /// <see cref="TuyaLocalDevice"/> and checking <see cref="IsConnected"/> by
+    /// hand is what produced the dead-socket bug this method exists to remove.
+    /// </remarks>
+    public async Task EnsureConnectedAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (IsConnected) return;
+        await ConnectAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task DisconnectAsync()
     {
         if (_lifetime is not null)
@@ -520,6 +554,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
         catch (Exception ex)
         {
             if (cancellationToken.IsCancellationRequested) return;
+            _disconnected = true;
             Disconnected?.Invoke(this, ex);
         }
     }
@@ -542,6 +577,7 @@ public sealed class TuyaLocalDevice : IAsyncDisposable
                 }
                 catch (Exception ex)
                 {
+                    _disconnected = true;
                     Disconnected?.Invoke(this, ex);
                     return;
                 }

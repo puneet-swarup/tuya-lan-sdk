@@ -8,6 +8,18 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-23
+
+### Fixed
+- **`IsConnected` now means what it says.** It was `_stream is not null`, which stayed true after the socket died, until someone called `DisconnectAsync`. A host that cached the device and checked this property - the obvious thing to do, and what the documentation implied - reused a dead connection indefinitely: every command timed out, nothing reconnected, and the device looked unreachable for ever. The receive loop and the heartbeat already detected the death; they now record it, so the property answers the question it is asked.
+- `ConnectAsync` no longer refuses to connect when a dead socket is still attached; it disconnects it first.
+
+### Added
+- **`EnsureConnectedAsync`.** Connects only if the connection is not usable. A host should call this before every operation instead of caching the device and guessing at its state - that pattern is what produced the bug above.
+
+### Documented
+- A "Connection lifecycle" section in the README states the contract: one session per device, `IsConnected` is authoritative, `Disconnected` fires once per death, and there is no automatic reconnection - the host decides when to retry.
+
 ## [2.0.0] - 2026-11-21
 
 Major rather than minor because the control-body fix changes behaviour:
