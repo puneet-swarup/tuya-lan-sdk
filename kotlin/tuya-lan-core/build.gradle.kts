@@ -40,9 +40,12 @@ tasks.test {
 mavenPublishing {
     coordinates("io.github.puneet-swarup", "tuya-lan", version.toString())
 
-    // Manual release: the plugin uploads and Central validates, then somebody
-    // presses Publish on the portal. Nothing appears publicly without that click.
-    publishToMavenCentral()
+    // Upload, then wait for Central's validation and fail the build if it is
+    // rejected - but do not release: somebody presses Publish on the portal.
+    // Without the validation wait, a deployment that Central refuses still ends
+    // with BUILD SUCCESSFUL and a green run, which is how a broken release looks
+    // healthy.
+    publishToMavenCentral(automaticRelease = false, validateDeployment = true)
 
     // Central refuses unsigned artefacts.
     signAllPublications()
