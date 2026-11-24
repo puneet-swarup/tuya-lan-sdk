@@ -66,8 +66,9 @@ public class JavaInteropTest {
                 "3.5", 1, 200, 200L);
         try {
             device.connect();
-        } catch (RuntimeException unreachable) {
-            // expected: nothing listens on port 1
+        } catch (Exception unreachable) {
+            // Expected: nothing listens on port 1. TuyaException is a checked
+            // exception in Java, so this must catch Exception, not RuntimeException.
         } finally {
             device.close();
         }
