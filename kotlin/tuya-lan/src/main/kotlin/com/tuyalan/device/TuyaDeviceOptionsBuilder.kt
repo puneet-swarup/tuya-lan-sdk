@@ -1,7 +1,7 @@
 package com.tuyalan.device
 
 import com.tuyalan.devices.TuyaDeviceOptions
-import com.tuyalan.devices.TuyaDeviceType
+import com.tuyalan.protocol.TuyaDeviceType
 import com.tuyalan.protocol.TuyaProtocolVersion
 
 /**
