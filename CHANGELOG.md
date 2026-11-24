@@ -13,6 +13,11 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 - The C# guide never mentioned `EnsureConnectedAsync`, `Disconnected`, or what `IsConnected` means - the three things 2.1.0 changed.
 - The README claimed both APIs are async; the Kotlin core is blocking first, with coroutines as `TuyaDeviceAsync`.
 
+## [3.1.0] - 2026-11-24
+
+### Added
+- **The jar is published.** 3.0.0 was Java-first and shipped only an `.aar`, which is an Android packaging format - a desktop or server Java project had no artefact to depend on. An AAR is a zip whose `classes.jar` is the compiled library, and that code has no `android.*` imports in it, so the release workflow now extracts it and attaches `tuya-lan-<tag>.jar` next to the aar. Same bytes, no second build, no module split.
+
 ## [3.0.0] - 2026-11-24
 
 ### Changed (breaking)
