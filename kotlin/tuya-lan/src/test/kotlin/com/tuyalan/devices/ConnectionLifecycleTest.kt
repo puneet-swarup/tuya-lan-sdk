@@ -31,7 +31,7 @@ class ConnectionLifecycleTest {
     fun connectingToAListeningPeerSucceeds() = runBlocking {
         FakeDevice().use { peer ->
             TuyaLocalDevice(options(peer.port)).use { device ->
-                device.connect()
+                device.connectAsync()
                 assertTrue(device.isConnected)
 
                 // The kernel completes the TCP handshake before the accept thread
@@ -46,7 +46,7 @@ class ConnectionLifecycleTest {
     fun isConnectedTurnsFalseWhenThePeerGoesAway() = runBlocking {
         FakeDevice().use { peer ->
             TuyaLocalDevice(options(peer.port)).use { device ->
-                device.connect()
+                device.connectAsync()
                 assertTrue(device.isConnected)
 
                 peer.dropConnection()
@@ -63,11 +63,11 @@ class ConnectionLifecycleTest {
     fun ensureConnectedReconnectsAfterThePeerGoesAway() = runBlocking {
         FakeDevice().use { peer ->
             TuyaLocalDevice(options(peer.port)).use { device ->
-                device.connect()
+                device.connectAsync()
                 peer.dropConnection()
                 waitUntil(5000) { !device.isConnected }
 
-                device.ensureConnected()
+                device.ensureConnectedAsync()
 
                 assertTrue(device.isConnected)
                 assertTrue("the peer never saw the reconnect", waitUntil(2000) { peer.acceptedCount >= 2 })
@@ -80,9 +80,9 @@ class ConnectionLifecycleTest {
     fun ensureConnectedDoesNotReconnectWhenTheSocketIsFine() = runBlocking {
         FakeDevice().use { peer ->
             TuyaLocalDevice(options(peer.port)).use { device ->
-                device.connect()
-                device.ensureConnected()
-                device.ensureConnected()
+                device.connectAsync()
+                device.ensureConnectedAsync()
+                device.ensureConnectedAsync()
 
                 // Give a wrong implementation time to make a second connection
                 // before declaring that it did not.

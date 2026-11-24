@@ -100,14 +100,14 @@ val device = TuyaLocalDevice(
 )
 
 lifecycleScope.launch {
-    device.connect()
-    val status = device.getStatus()
-    device.setDp("1", true)
+    device.connectAsync()
+    val status = device.getStatusAsync()
+    device.setDpAsync("1", true)
 }
 ```
 
 ```bash
-cd android && ./gradlew :tuya-lan:test
+cd kotlin && ./gradlew :tuya-lan:test
 ```
 
 ## Compatibility
@@ -272,31 +272,39 @@ MIT. See [LICENSE](LICENSE).
 This is an independent implementation written from the public reverse-engineering
 record; it is not affiliated with or endorsed by Tuya. Use it on hardware you own.
 
-## Using it from Java
+## Two APIs, one engine
 
-The library is coroutine-based, so `connect()`, `getStatus()` and the setters are
-`suspend` functions that Java cannot call directly. `com.tuyalan.java.TuyaLanDevice`
-is the same device with every call wrapped in a blocking method:
+The library is written Java-first: the core interface is blocking, returns values
+and reports events through listeners. Kotlin callers get the same object with a
+coroutine API on it.
+
+| Java | Kotlin |
+|---|---|
+| `device.connect()` | `device.connectAsync()` |
+| `device.getStatus()` | `device.getStatusAsync()` |
+| `device.setDp("1", true)` | `device.setDpAsync("1", true)` |
+| `device.close()` | `device.disconnectAsync()` |
+| `device.addStatusListener(l -> ...)` | `device.statuses.collect { }` |
 
 ```java
-try (TuyaLanDevice plug = TuyaLanDevice.create(
-        "192.168.1.42", "bf1234567890abcdefghij", "0123456789abcdef", "3.5")) {
-    plug.connect();
-    Boolean on = plug.getBool("1");   // null when the device did not report it
-    plug.setBool("1", !on);
+TuyaDeviceOptions options = new TuyaDeviceOptionsBuilder()
+        .host("192.168.1.42")
+        .deviceId("bf1234567890abcdefghij")
+        .localKey("0123456789abcdef")
+        .version(TuyaProtocolVersion.V33)
+        .build();
+
+try (TuyaDevice device = new TuyaLocalDevice(options)) {
+    device.addStatusListener(status -> System.out.println(status.getDps()));
+    device.connect();
+    Boolean on = device.getStatus().getBool("1");
+    device.setDp("1", !Boolean.TRUE.equals(on));
 }
 ```
 
-| Kotlin | Java |
-|---|---|
-| `suspend fun connect()` | `plug.connect()` |
-| `suspend fun getStatus(): TuyaStatus` | `plug.getStatus()` |
-| `suspend fun setDp(id, boolean)` | `plug.setBool(id, value)` |
-| `suspend fun ping(): Boolean` | `plug.ping()` |
-| `disconnect()` | `plug.close()` / `plug.disconnect()` |
-
-`JavaInteropTest` compiles and runs as part of the Android unit tests: if Java
-support breaks, the build fails.
+`TuyaException` is a checked exception: Java must catch it, and that is deliberate
+- a device that cannot be reached is not an exceptional edge case in this domain,
+it is Tuesday.
 
 ## Connection lifecycle
 

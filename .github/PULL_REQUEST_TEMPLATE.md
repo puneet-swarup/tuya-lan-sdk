@@ -11,7 +11,7 @@
 Tick what applies, and say what you ran:
 
 - [ ] `dotnet build csharp/TuyaLan.sln && dotnet test csharp/TuyaLan.sln`
-- [ ] `cd android && ./gradlew :tuya-lan:test`
+- [ ] `cd kotlin && ./gradlew :tuya-lan:test`
 - [ ] `python3 tools/reference_impl.py --selftest`
 - [ ] `python3 tools/test_roundtrip.py`
 - [ ] `python3 tools/device_console.py --selftest`

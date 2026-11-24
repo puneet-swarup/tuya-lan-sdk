@@ -8,6 +8,17 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-11-24
+
+### Changed (breaking)
+- **The API is Java-first.** The library was coroutine-based throughout, so a Java caller could do nothing without a `Continuation` - the reason 2.2.0 shipped a blocking facade. That was the wrong shape for a public library: Kotlin calls Java happily, Java cannot call Kotlin happily, so the core should be the language both can use. `TuyaDevice` is now a blocking interface - `connect()`, `close()`, `getStatus()`, `setDps()`, `setDp()`, `ping()`, and listener registration - and `TuyaLocalDevice` implements it directly. The facade is gone; there is one front door.
+- **Events are listeners.** `addStatusListener`, `addDisconnectListener`, `addErrorListener` take SAM interfaces that Java can pass a lambda to. The `statuses` and `protocolErrors` flows remain as the Kotlin binding.
+- **The coroutine API moved to `TuyaDeviceAsync`**, implemented by the same object: `connectAsync()`, `disconnectAsync()`, `getStatusAsync()`, `setDpsAsync()`, `setDpAsync()`, `pingAsync()`. Kotlin callers use this and never wrap a blocking call in `runBlocking` to avoid pinning a thread.
+- **`TuyaDeviceOptionsBuilder`** builds the options from Java. A data class with default arguments has no Java-friendly constructor.
+
+### Why the version is 3.0.0
+Renaming `connect()` to `connectAsync()` on the suspend side and taking the plain name for the blocking side breaks every Kotlin caller. One consumer existed (Battery Guardian), and it was updated in the same release.
+
 ## [2.2.0] - 2026-11-24
 
 ### Added

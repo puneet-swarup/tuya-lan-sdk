@@ -11,7 +11,13 @@ import com.tuyalan.protocol.TuyaMessage
 import com.tuyalan.protocol.TuyaProtocolVersion
 import com.tuyalan.protocol.TuyaRawFrame
 import com.tuyalan.protocol.TuyaSession
+import com.tuyalan.device.TuyaDevice
+import com.tuyalan.device.TuyaDeviceAsync
+import com.tuyalan.device.TuyaDisconnectListener
+import com.tuyalan.device.TuyaErrorListener
+import com.tuyalan.device.TuyaStatusListener
 import java.io.Closeable
+import java.util.concurrent.CopyOnWriteArrayList
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,6 +38,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -54,13 +61,13 @@ import org.json.JSONObject
  * val device = TuyaLocalDevice(
  *     TuyaDeviceOptions(host = "192.168.1.42", deviceId = "eb0123...", localKey = "0123456789abcdef"),
  * )
- * device.connect()
+ * device.connectAsync()
  * val status = device.getStatus()
  * device.setDp("1", true)
  * device.close()
  * ```
  */
-class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
+class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAsync, Closeable {
 
     private val session = TuyaSession(options.version, options.localKeyBytes?.copyOf() ?: options.localKey.toByteArray(Charsets.UTF_8)).apply {
         headerMode = options.headerMode
@@ -103,6 +110,12 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     /** Frames that could not be decoded. The connection stays open. */
     val protocolErrors: SharedFlow<TuyaException> = _protocolErrors.asSharedFlow()
 
+    // The flows above are the Kotlin binding. These are the Java one - a
+    // SharedFlow needs a coroutine to collect, which a Java caller does not have.
+    private val statusListeners = CopyOnWriteArrayList<TuyaStatusListener>()
+    private val disconnectListeners = CopyOnWriteArrayList<TuyaDisconnectListener>()
+    private val errorListeners = CopyOnWriteArrayList<TuyaErrorListener>()
+
     /** Protocol revision in use. */
     val version: TuyaProtocolVersion get() = session.version
 
@@ -119,7 +132,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
      * and every command timed out. The receive loop and the heartbeat already
      * notice the death; they now record it here.
      */
-    val isConnected: Boolean
+    override val isConnected: Boolean
         get() {
             if (disconnected) return false
             val current = socket ?: return false
@@ -127,17 +140,17 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         }
 
     /** Connects only if the connection is not usable. */
-    suspend fun ensureConnected() {
-        if (!isConnected) connect()
+    suspend fun ensureConnectedAsync() {
+        if (!isConnected) connectAsync()
     }
 
     /** Opens the TCP connection and negotiates a session key when the version needs one. */
-    suspend fun connect() {
+    suspend fun connectAsync() {
         if (isConnected) throw IllegalStateException("already connected")
 
         // A connection that died leaves its socket behind; drop it rather than
         // refuse to connect because of one nobody can use.
-        if (socket != null) disconnect()
+        if (socket != null) disconnectAsync()
 
         withContext(Dispatchers.IO) {
             val newSocket = Socket()
@@ -171,7 +184,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
             } catch (failure: Throwable) {
                 // A failed handshake (wrong local key, wrong protocol version, a silent
                 // device) must not leave a half-open socket behind: isConnected would
-                // still report true and the next connect() would throw "already connected".
+                // still report true and the next connectAsync() would throw "already connected".
                 runCatching { socket?.close() }
                 socket = null
                 input = null
@@ -191,7 +204,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     /** Closes the connection and stops the background loops. */
-    suspend fun disconnect() {
+    suspend fun disconnectAsync() {
         scope?.cancel()
         scope = null
         heartbeatJob = null
@@ -206,7 +219,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     /** Queries the current data points. */
-    suspend fun getStatus(): TuyaStatus {
+    suspend fun getStatusAsync(): TuyaStatus {
         val reply = sendRequest(
             queryCommand,
             buildQueryPayload(),
@@ -232,10 +245,10 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     /** Sends one or more data points and waits for the device to acknowledge. */
-    suspend fun setDps(dps: TuyaDps) = setDps(dps.asMap)
+    suspend fun setDpsAsync(dps: TuyaDps) = setDpsAsync(dps.asMap)
 
     /** Sends one or more data points and waits for the device to acknowledge. */
-    suspend fun setDps(dps: Map<String, Any?>) {
+    suspend fun setDpsAsync(dps: Map<String, Any?>) {
         val payload = buildControlPayload(dps)
         val reply = sendRequest(
             controlCommand,
@@ -266,16 +279,16 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
     }
 
     /** Sets a single boolean data point, e.g. a switch. */
-    suspend fun setDp(dpId: String, value: Boolean) = setDps(TuyaDps().set(dpId, value))
+    suspend fun setDpAsync(dpId: String, value: Boolean) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sets a single numeric data point, e.g. brightness. */
-    suspend fun setDp(dpId: String, value: Int) = setDps(TuyaDps().set(dpId, value))
+    suspend fun setDpAsync(dpId: String, value: Int) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sets a single string data point, e.g. a work mode. */
-    suspend fun setDp(dpId: String, value: String) = setDps(TuyaDps().set(dpId, value))
+    suspend fun setDpAsync(dpId: String, value: String) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sends a heartbeat and returns true when the device answers. */
-    suspend fun ping(): Boolean = try {
+    suspend fun pingAsync(): Boolean = try {
         sendRequest(
             TuyaCommand.HEART_BEAT,
             ByteArray(0),
@@ -291,7 +304,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
      * this for commands this library does not model.
      */
     @JvmOverloads
-    suspend fun sendRawCommand(
+    suspend fun sendRawCommandAsync(
         command: Int,
         payload: ByteArray,
         acceptedReplies: Set<Int> = setOf(command, TuyaCommand.STATUS),
@@ -315,6 +328,36 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
 
     private val controlCommand: Int
         get() = if (options.deviceType == TuyaDeviceType.DEVICE22) TuyaCommand.CONTROL_NEW else TuyaCommand.CONTROL
+
+    // ---- TuyaDevice: the Java-facing, blocking half ------------------------
+
+    override val protocolVersion: String get() = session.version.label
+
+    override fun connect() = runBlocking { connectAsync() }
+
+    override fun getStatus(): TuyaStatus = runBlocking { getStatusAsync() }
+
+    override fun setDps(dps: Map<String, Any?>) = runBlocking { setDpsAsync(dps) }
+
+    override fun setDp(dpId: String, value: Boolean) = runBlocking { setDpAsync(dpId, value) }
+
+    override fun setDp(dpId: String, value: Int) = runBlocking { setDpAsync(dpId, value) }
+
+    override fun setDp(dpId: String, value: String) = runBlocking { setDpAsync(dpId, value) }
+
+    override fun ping(): Boolean = runBlocking { pingAsync() }
+
+    override fun addStatusListener(listener: TuyaStatusListener) { statusListeners.add(listener) }
+
+    override fun addDisconnectListener(listener: TuyaDisconnectListener) { disconnectListeners.add(listener) }
+
+    override fun addErrorListener(listener: TuyaErrorListener) { errorListeners.add(listener) }
+
+    override fun removeStatusListener(listener: TuyaStatusListener) { statusListeners.remove(listener) }
+
+    override fun removeDisconnectListener(listener: TuyaDisconnectListener) { disconnectListeners.remove(listener) }
+
+    override fun removeErrorListener(listener: TuyaErrorListener) { errorListeners.remove(listener) }
 
     private suspend fun negotiateSessionKey() {
         val clientNonce = TuyaSession.createNonce()
@@ -388,14 +431,14 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         // and an OutputStream gives no atomicity guarantee for concurrent writes, so
         // two frames could otherwise interleave on the wire and corrupt both.
         writeMutex.withLock {
-            val stream = output ?: throw IllegalStateException("the device is not connected; call connect() first")
+            val stream = output ?: throw IllegalStateException("the device is not connected; call connectAsync() first")
             stream.write(frame)
             stream.flush()
         }
     }
 
     private suspend fun readFrame(): TuyaRawFrame = withContext(Dispatchers.IO) {
-        val stream = input ?: throw IllegalStateException("the device is not connected; call connect() first")
+        val stream = input ?: throw IllegalStateException("the device is not connected; call connectAsync() first")
         while (true) {
             val frame = TuyaFrameCodec.tryReadFrame(readBuffer, 0, readLength)
             if (frame != null) {
@@ -417,6 +460,12 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         throw IllegalStateException("unreachable")
     }
 
+    /** One place that reports an error, to flows and to listeners alike. */
+    private fun emitError(error: TuyaException) {
+        _protocolErrors.tryEmit(error)
+        errorListeners.forEach { runCatching { it.onError(error) } }
+    }
+
     private suspend fun receiveLoop() {
         try {
             while (true) {
@@ -426,10 +475,11 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         } catch (e: IOException) {
             if (isConnected) {
                 disconnected = true
-                _protocolErrors.tryEmit(TuyaProtocolException("connection lost: ${e.message}", e))
+                emitError(TuyaProtocolException("connection lost: ${e.message}", e))
+                disconnectListeners.forEach { runCatching { it.onDisconnected(e) } }
             }
         } catch (e: TuyaException) {
-            _protocolErrors.tryEmit(e)
+            emitError(e)
         }
     }
 
@@ -448,7 +498,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
         val message = try {
             session.decode(raw)
         } catch (e: TuyaException) {
-            _protocolErrors.tryEmit(e)
+            emitError(e)
             return
         }
 
@@ -460,7 +510,10 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : Closeable {
 
         if (TuyaCommand.carriesDataPoints(message.command) && message.payload.isNotEmpty()) {
             val status = TuyaStatus.parse(message.payload)
-            if (status.hasData) _statuses.tryEmit(status)
+            if (status.hasData) {
+                _statuses.tryEmit(status)
+                statusListeners.forEach { runCatching { it.onStatus(status) } }
+            }
         }
     }
 

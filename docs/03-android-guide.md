@@ -19,7 +19,7 @@ android/
 ```
 
 ```bash
-cd android
+cd kotlin
 ./gradlew :tuya-lan:test          # JVM unit tests (known-answer vectors)
 ./gradlew :sample-app:assembleDebug
 ```

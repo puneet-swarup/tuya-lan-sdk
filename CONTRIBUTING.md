@@ -20,7 +20,7 @@ dotnet test  csharp/TuyaLan.sln
 ```
 
 ```bash
-cd android && ./gradlew :tuya-lan:test
+cd kotlin && ./gradlew :tuya-lan:test
 ```
 
 ```bash

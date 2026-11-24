@@ -85,7 +85,7 @@ class MainActivity : Activity() {
                 device?.close()
                 val newDevice = TuyaLocalDevice(options)
                 append("Connecting to ${options.host} (protocol ${options.version.label})...")
-                newDevice.connect()
+                newDevice.connectAsync()
                 append("Connected. Session key negotiated: ${newDevice.hasSessionKey}")
                 device = newDevice
             } catch (e: Exception) {
@@ -98,7 +98,7 @@ class MainActivity : Activity() {
         val current = device ?: return append("Connect first.")
         scope.launch {
             try {
-                val status = current.getStatus()
+                val status = current.getStatusAsync()
                 append("Status: ${status.dps.entries.joinToString { "${it.key}=${it.value}" }}")
             } catch (e: Exception) {
                 append("Status failed: ${e.message}")
@@ -110,9 +110,9 @@ class MainActivity : Activity() {
         val current = device ?: return append("Connect first.")
         scope.launch {
             try {
-                val status = current.getStatus()
+                val status = current.getStatusAsync()
                 val isOn = status.getBool("1") ?: false
-                current.setDp("1", !isOn)
+                current.setDpAsync("1", !isOn)
                 append("DP 1 set to ${!isOn}")
             } catch (e: Exception) {
                 append("Toggle failed: ${e.message}")

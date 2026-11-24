@@ -160,7 +160,7 @@ accepts the same `maven-publish` block pointed at
 ### Releasing
 
 ```bash
-cd android
+cd kotlin
 ./gradlew :tuya-lan:publishReleasePublicationToMavenLocal   # smoke test
 ./gradlew :tuya-lan:publish                                 # to the configured repository
 ```
