@@ -13,7 +13,15 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 - The C# guide never mentioned `EnsureConnectedAsync`, `Disconnected`, or what `IsConnected` means - the three things 2.1.0 changed.
 - The README claimed both APIs are async; the Kotlin core is blocking first, with coroutines as `TuyaDeviceAsync`.
 
-## [3.0.0] - 2026-11-24
+## [3.1.0] - 2026-11-24
+
+### Added
+- **A real `.jar` for Java and JVM projects.** 3.0.0 made the API Java-first but still shipped only an `.aar` - an Android packaging format that nothing else can read - so a desktop or server Java product had no way to depend on it. The library is now two modules: `tuya-lan-core` is a plain JVM library that builds the jar, and `tuya-lan` is a thin Android module that repackages the same code as the aar. Both artefacts are attached to every release.
+
+### Documented
+- The README said "Java 17+" in Compatibility while the only artefact was an aar. It now says which file to download for which target, and warns against adding both.
+
+## [3.0.0] - 2026-11-24## [3.0.0] - 2026-11-24
 
 ### Changed (breaking)
 - **The API is Java-first.** The library was coroutine-based throughout, so a Java caller could do nothing without a `Continuation` - the reason 2.2.0 shipped a blocking facade. That was the wrong shape for a public library: Kotlin calls Java happily, Java cannot call Kotlin happily, so the core should be the language both can use. `TuyaDevice` is now a blocking interface - `connect()`, `close()`, `getStatus()`, `setDps()`, `setDp()`, `ping()`, and listener registration - and `TuyaLocalDevice` implements it directly. The facade is gone; there is one front door.

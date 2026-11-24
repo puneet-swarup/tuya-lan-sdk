@@ -88,12 +88,20 @@ jobs:
           chmod +x gradlew
           ./gradlew :tuya-lan:assembleRelease --no-daemon
 
-      - name: Name the artifact after the tag
+      - name: Build the JVM jar
         run: |
-          cp kotlin/tuya-lan/build/outputs/aar/tuya-lan-release.aar \
-             "tuya-lan-${{ github.event.release.tag_name || inputs.tag }}.aar"
+          cd kotlin
+          ./gradlew :tuya-lan-core:jar --no-daemon
+
+      - name: Name the artifacts after the tag
+        run: |
+          tag="${{ github.event.release.tag_name || inputs.tag }}"
+          cp kotlin/tuya-lan/build/outputs/aar/tuya-lan-release.aar "tuya-lan-$tag.aar"
+          # The jar is what a Java or desktop project consumes: an AAR is an
+          # Android packaging format and nothing else can read it.
+          cp kotlin/tuya-lan-core/build/libs/tuya-lan-core-*.jar "tuya-lan-$tag.jar"
 
       - name: Attach the AAR to the release
-        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" tuya-lan-*.aar --clobber
+        run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" tuya-lan-*.aar tuya-lan-*.jar --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

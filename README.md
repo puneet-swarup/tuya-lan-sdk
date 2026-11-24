@@ -58,23 +58,38 @@ git clone https://github.com/puneet-swarup/tuya-lan-sdk.git
 dotnet add reference tuya-lan-sdk/csharp/src/TuyaLan/TuyaLan.csproj
 ```
 
-### Java and Kotlin (JVM, Android)
+### Java and Kotlin on the JVM (desktop, server, CLI)
 
-**Not on Maven Central yet** — that needs a namespace and signing, which
-[`docs/07-publishing.md`](docs/07-publishing.md) walks through. Until then, take
-the `.aar` from the [releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases):
+A **`.jar`**. Download it from the
+[releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases) and put it
+on the classpath:
 
 ```bash
-curl -L -o app/libs/tuya-lan-3.0.0.aar \
-  https://github.com/puneet-swarup/tuya-lan-sdk/releases/download/v3.0.0/tuya-lan-v3.0.0.aar
+curl -L -O https://github.com/puneet-swarup/tuya-lan-sdk/releases/download/v3.1.0/tuya-lan-3.1.0.jar
+javac -cp tuya-lan-3.1.0.jar MyApp.java
+java  -cp tuya-lan-3.1.0.jar:. MyApp
+```
+
+The jar needs `kotlinx-coroutines-core` and `okhttp` at runtime; both are listed
+in its POM metadata. Not on Maven Central yet — that needs a namespace and
+signing, which [`docs/07-publishing.md`](docs/07-publishing.md) walks through.
+
+### Android
+
+An **`.aar`**, which is an Android packaging format and nothing else can read it:
+
+```bash
+curl -L -o app/libs/tuya-lan-3.1.0.aar \
+  https://github.com/puneet-swarup/tuya-lan-sdk/releases/download/v3.1.0/tuya-lan-v3.1.0.aar
 ```
 
 ```kotlin
-implementation(files("libs/tuya-lan-3.0.0.aar"))
+implementation(files("libs/tuya-lan-3.1.0.aar"))
 ```
 
-The same artefact serves Java and Kotlin: it is a normal JAR inside an AAR, with
-no Android APIs in it beyond the packaging.
+The two artefacts are the same code: `tuya-lan-core` is a plain JVM library, and
+`tuya-lan` is a thin Android module that repackages it as an AAR. If you use the
+AAR, do not also add the jar — the classes would be there twice.
 
 ## Quick start — C#
 
@@ -261,7 +276,10 @@ Full details in [`docs/01-protocol-3.5.md`](docs/01-protocol-3.5.md).
 tuya-lan-sdk/
 ├── docs/                      protocol, per-language guides, console, publishing
 ├── csharp/                    C# (.NET 10) library, console demo, xUnit tests
-├── kotlin/                    Kotlin/JVM library module, sample app, JVM tests
+├── kotlin/
+│   ├── tuya-lan-core/         the library: plain JVM, builds the .jar
+│   ├── tuya-lan/              thin Android module, repackages it as the .aar
+│   └── sample-app/            Android sample
 ├── tools/
 │   ├── reference_impl.py      independent Python implementation + vector generator
 │   ├── fake_device.py         a working 3.5 device simulator (no hardware needed)
