@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+      The code lives in :tuya-lan-core and has no Android in it, so the Android
+      half - the permissions a consumer needs merged into their manifest - lives
+      here, in the module that is actually Android.
+    -->
+
     <!-- Local control talks to devices on the LAN over TCP 6668 and UDP 6667/7000. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

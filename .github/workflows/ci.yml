@@ -61,7 +61,10 @@ jobs:
         run: chmod +x kotlin/gradlew
 
       - name: Build and Test
-        run: cd kotlin && ./gradlew :tuya-lan:testDebugUnitTest :tuya-lan:assembleRelease :sample-app:assembleDebug --no-daemon
+        run: |
+          cd kotlin
+          ./gradlew :tuya-lan-core:test :tuya-lan-core:jar \
+                    :tuya-lan:assembleRelease :sample-app:assembleDebug --no-daemon
 
   # ---------------------------------------------------------
   # 3. Python Tools Validation

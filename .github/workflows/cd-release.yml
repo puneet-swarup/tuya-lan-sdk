@@ -88,6 +88,19 @@ jobs:
           chmod +x gradlew
           ./gradlew :tuya-lan:assembleRelease --no-daemon
 
+      - name: Publish to Maven Central
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          cd kotlin
+          # Uploads and lets Central validate. Nothing is public until somebody
+          # presses Publish on central.sonatype.com.
+          ./gradlew :tuya-lan-core:publishToMavenCentral --no-daemon
+
       - name: Name the artifacts after the tag
         run: |
           tag="${{ github.event.release.tag_name || inputs.tag }}"
