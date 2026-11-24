@@ -5,7 +5,7 @@
 <h1 align="center">Tuya LAN SDK</h1>
 
 <p align="center">
-  Talk to Tuya smart plugs and switches on your own network — C# (.NET 10) and Kotlin (Android).
+  Talk to Tuya smart plugs and switches on your own network — from Java, Kotlin and C# (.NET 10).
 </p>
 
 <p align="center">
@@ -13,8 +13,10 @@
   <a href="https://github.com/puneet-swarup/tuya-lan-sdk/releases"><img src="https://img.shields.io/github/v/release/puneet-swarup/tuya-lan-sdk" alt="Release"></a>
   <a href="https://www.nuget.org/packages/TuyaLan"><img src="https://img.shields.io/nuget/v/TuyaLan" alt="NuGet"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/puneet-swarup/tuya-lan-sdk" alt="License"></a>
-  <img src="https://img.shields.io/badge/.NET-10.0-512BD4" alt=".NET 10">
-  <img src="https://img.shields.io/badge/Android-minSdk%2024-3DDC84" alt="Android">
+  <img src="https://img.shields.io/badge/Java-17%2B-ED8B00?logo=openjdk&logoColor=white" alt="Java 17+">
+  <img src="https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin">
+  <img src="https://img.shields.io/badge/Android-minSdk%2024-3DDC84?logo=android&logoColor=white" alt="Android">
+  <img src="https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet" alt=".NET 10">
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB" alt="Python 3.11+">
 </p>
 
@@ -42,26 +44,37 @@ No Tuya SDK, no Tuya app, no third-party protocol library.
 
 ## Install
 
+### C# (.NET 10)
+
 ```bash
 dotnet add package TuyaLan
 ```
 
-```kotlin
-implementation("com.tuyalan:tuya-lan:2.0.0")
-```
-
-The .NET package is on [nuget.org](https://www.nuget.org/packages/TuyaLan).
-
-The Android library is **not** on Maven Central yet — that needs the namespace
-and signing set up, and [`docs/07-publishing.md`](docs/07-publishing.md) walks
-through it. Until then, take the `.aar` from the
-[releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases), or
-reference the projects directly:
+Published on [nuget.org](https://www.nuget.org/packages/TuyaLan). Or reference the
+project directly:
 
 ```bash
 git clone https://github.com/puneet-swarup/tuya-lan-sdk.git
 dotnet add reference tuya-lan-sdk/csharp/src/TuyaLan/TuyaLan.csproj
 ```
+
+### Java and Kotlin (JVM, Android)
+
+**Not on Maven Central yet** — that needs a namespace and signing, which
+[`docs/07-publishing.md`](docs/07-publishing.md) walks through. Until then, take
+the `.aar` from the [releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases):
+
+```bash
+curl -L -o app/libs/tuya-lan-3.0.0.aar \
+  https://github.com/puneet-swarup/tuya-lan-sdk/releases/download/v3.0.0/tuya-lan-v3.0.0.aar
+```
+
+```kotlin
+implementation(files("libs/tuya-lan-3.0.0.aar"))
+```
+
+The same artefact serves Java and Kotlin: it is a normal JAR inside an AAR, with
+no Android APIs in it beyond the packaging.
 
 ## Quick start — C#
 
@@ -87,6 +100,32 @@ dotnet build csharp/TuyaLan.sln
 dotnet test  csharp/TuyaLan.sln
 ```
 
+## Quick start — Java
+
+```java
+TuyaDeviceOptions options = new TuyaDeviceOptionsBuilder()
+        .host("192.168.1.42")
+        .deviceId("eb0123456789abcdefghij")
+        .localKey("0123456789abcdef")
+        .version(TuyaProtocolVersion.V35)
+        .build();
+
+try (TuyaDevice device = new TuyaLocalDevice(options)) {
+    device.addStatusListener(status -> System.out.println(status.getDps()));
+
+    device.connect();
+    Boolean on = device.getStatus().getBool("1");
+    device.setDp("1", !Boolean.TRUE.equals(on));
+} catch (TuyaException e) {
+    System.err.println("plug did not answer: " + e.getMessage());
+}
+```
+
+`TuyaException` is a checked exception, so the compiler makes you deal with a plug
+that does not answer. There is no coroutine, no `Continuation` and no Kotlin
+default argument anywhere in that snippet - the core API is written for Java, and
+Kotlin builds on it.
+
 ## Quick start — Kotlin
 
 ```kotlin
@@ -110,6 +149,49 @@ lifecycleScope.launch {
 cd kotlin && ./gradlew :tuya-lan:test
 ```
 
+## The Java API and the Kotlin API
+
+The library is written Java-first: the core interface is blocking, returns values
+and reports events through listeners. Kotlin callers get the same object with a
+coroutine API on it.
+
+| Java | Kotlin |
+|---|---|
+| `device.connect()` | `device.connectAsync()` |
+| `device.getStatus()` | `device.getStatusAsync()` |
+| `device.setDp("1", true)` | `device.setDpAsync("1", true)` |
+| `device.close()` | `device.disconnectAsync()` |
+| `device.addStatusListener(l -> ...)` | `device.statuses.collect { }` |
+
+The quick start above is the whole of it. The two APIs are the same object: the
+blocking one is the core, the coroutine one is the same methods with an `Async`
+suffix, and neither is a wrapper around the other.
+
+## Connection lifecycle
+
+A Tuya device accepts **one session at a time**. What the library guarantees,
+and what a host has to do:
+
+| | |
+|---|---|
+| `IsConnected` | authoritative. It turns false as soon as the receive loop or the heartbeat sees the socket go. |
+| `Disconnected` | raised **once** per death, with the exception that caused it. |
+| Reconnection | **not automatic.** The host decides when to retry - a battery-powered host may not want to. |
+| `EnsureConnectedAsync` | connect-if-needed. Call this before an operation rather than caching the device and checking `IsConnected` by hand. |
+
+The failure this section exists to prevent: caching a `TuyaLocalDevice`, letting
+the connection die quietly (router idle timeout, Wi-Fi power save, a device
+reboot, or the host machine sleeping), and then reusing it. Every command times
+out, nothing reconnects, and the device looks unreachable for ever. Before 2.1.0
+`IsConnected` stayed true through all of that.
+
+Two things follow:
+
+- **Enable the heartbeat** if the host is long-running. It is what detects a
+  connection that dies while nothing is being sent.
+- **Drop the device on any failure**, not just when `IsConnected` says so. A
+  command that times out is a strong hint that the socket is gone.
+
 ## Compatibility
 
 | protocol | frame | crypto | session key | state |
@@ -120,8 +202,10 @@ cd kotlin && ./gradlew :tuya-lan:test
 
 | platform | requirement |
 |---|---|
-| .NET | `net10.0` |
+| Java | 17+ (the library is compiled to JVM 17 bytecode) |
+| Kotlin | 2.x, `kotlinx-coroutines-core` 1.8.1 |
 | Android | `minSdk 24`, `compileSdk 36`, AGP 9 |
+| .NET | `net10.0` |
 | Python tools | 3.11+, `cryptography` |
 
 ## Validate a real plug
@@ -176,8 +260,8 @@ Full details in [`docs/01-protocol-3.5.md`](docs/01-protocol-3.5.md).
 ```
 tuya-lan-sdk/
 ├── docs/                      protocol, per-language guides, console, publishing
-├── csharp/                    .NET 10 library, console demo, xUnit tests
-├── android/                   Android library module, sample app, JVM tests
+├── csharp/                    C# (.NET 10) library, console demo, xUnit tests
+├── kotlin/                    Kotlin/JVM library module, sample app, JVM tests
 ├── tools/
 │   ├── reference_impl.py      independent Python implementation + vector generator
 │   ├── fake_device.py         a working 3.5 device simulator (no hardware needed)
@@ -274,63 +358,3 @@ MIT. See [LICENSE](LICENSE).
 
 This is an independent implementation written from the public reverse-engineering
 record; it is not affiliated with or endorsed by Tuya. Use it on hardware you own.
-
-## Two APIs, one engine
-
-The library is written Java-first: the core interface is blocking, returns values
-and reports events through listeners. Kotlin callers get the same object with a
-coroutine API on it.
-
-| Java | Kotlin |
-|---|---|
-| `device.connect()` | `device.connectAsync()` |
-| `device.getStatus()` | `device.getStatusAsync()` |
-| `device.setDp("1", true)` | `device.setDpAsync("1", true)` |
-| `device.close()` | `device.disconnectAsync()` |
-| `device.addStatusListener(l -> ...)` | `device.statuses.collect { }` |
-
-```java
-TuyaDeviceOptions options = new TuyaDeviceOptionsBuilder()
-        .host("192.168.1.42")
-        .deviceId("bf1234567890abcdefghij")
-        .localKey("0123456789abcdef")
-        .version(TuyaProtocolVersion.V33)
-        .build();
-
-try (TuyaDevice device = new TuyaLocalDevice(options)) {
-    device.addStatusListener(status -> System.out.println(status.getDps()));
-    device.connect();
-    Boolean on = device.getStatus().getBool("1");
-    device.setDp("1", !Boolean.TRUE.equals(on));
-}
-```
-
-`TuyaException` is a checked exception: Java must catch it, and that is deliberate
-- a device that cannot be reached is not an exceptional edge case in this domain,
-it is Tuesday.
-
-## Connection lifecycle
-
-A Tuya device accepts **one session at a time**. What the library guarantees,
-and what a host has to do:
-
-| | |
-|---|---|
-| `IsConnected` | authoritative. It turns false as soon as the receive loop or the heartbeat sees the socket go. |
-| `Disconnected` | raised **once** per death, with the exception that caused it. |
-| Reconnection | **not automatic.** The host decides when to retry - a battery-powered host may not want to. |
-| `EnsureConnectedAsync` | connect-if-needed. Call this before an operation rather than caching the device and checking `IsConnected` by hand. |
-
-The failure this section exists to prevent: caching a `TuyaLocalDevice`, letting
-the connection die quietly (router idle timeout, Wi-Fi power save, a device
-reboot, or the host machine sleeping), and then reusing it. Every command times
-out, nothing reconnects, and the device looks unreachable for ever. Before 2.1.0
-`IsConnected` stayed true through all of that.
-
-Two things follow:
-
-- **Enable the heartbeat** if the host is long-running. It is what detects a
-  connection that dies while nothing is being sent.
-- **Drop the device on any failure**, not just when `IsConnected` says so. A
-  command that times out is a strong hint that the socket is gone.
-
