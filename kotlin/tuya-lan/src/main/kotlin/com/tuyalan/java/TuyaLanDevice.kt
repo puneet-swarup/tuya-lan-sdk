@@ -65,8 +65,14 @@ class TuyaLanDevice @JvmOverloads constructor(
     /** Reads every data point the device reports. */
     fun getStatus(): TuyaStatus = runBlocking { device.getStatus() }
 
-    /** Reads one boolean data point, e.g. relay `"1"`. */
-    fun getBool(dpId: String): Boolean = runBlocking { device.getStatus().getBool(dpId) }
+    /**
+     * Reads one boolean data point, e.g. relay `"1"`.
+     *
+     * Null when the device did not report that data point - which is different
+     * from false, and must not be flattened into it: a relay that is unknown is
+     * not a relay that is off.
+     */
+    fun getBool(dpId: String): Boolean? = runBlocking { device.getStatus().getBool(dpId) }
 
     /** Writes one boolean data point, e.g. relay `"1"`. */
     fun setBool(dpId: String, value: Boolean) {

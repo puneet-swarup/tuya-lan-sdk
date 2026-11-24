@@ -282,7 +282,7 @@ is the same device with every call wrapped in a blocking method:
 try (TuyaLanDevice plug = TuyaLanDevice.create(
         "192.168.1.42", "bf1234567890abcdefghij", "0123456789abcdef", "3.5")) {
     plug.connect();
-    boolean on = plug.getBool("1");
+    Boolean on = plug.getBool("1");   // null when the device did not report it
     plug.setBool("1", !on);
 }
 ```
