@@ -84,7 +84,7 @@ jobs:
 
       - name: Build the library
         run: |
-          cd android
+          cd kotlin
           chmod +x gradlew
           ./gradlew :tuya-lan:assembleRelease --no-daemon
 
