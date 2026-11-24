@@ -8,6 +8,11 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 
 ## [Unreleased]
 
+### Documented
+- The Android guide showed `device.connect()` / `getStatus()` / `setDp()` inside a coroutine. After 3.0.0 those are the *blocking* methods, so following the guide would pin a thread; they are `connectAsync` / `getStatusAsync` / `setDpAsync` now.
+- The C# guide never mentioned `EnsureConnectedAsync`, `Disconnected`, or what `IsConnected` means - the three things 2.1.0 changed.
+- The README claimed both APIs are async; the Kotlin core is blocking first, with coroutines as `TuyaDeviceAsync`.
+
 ## [3.0.0] - 2026-11-24
 
 ### Changed (breaking)
