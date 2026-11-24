@@ -1,8 +1,9 @@
 name: CI - Build and Test
 
 on:
+  # Every branch, not just main: a change should be able to prove itself green
+  # before it reaches main, rather than main being the place it is discovered.
   push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
