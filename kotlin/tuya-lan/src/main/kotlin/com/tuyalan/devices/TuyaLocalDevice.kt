@@ -409,6 +409,13 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
         acceptedReplies: Set<Int>,
         tolerateTimeout: Boolean = false,
     ): TuyaMessage = requestMutex.withLock {
+        // Sending on a device that was never connected used to fail with a null
+        // pointer inside write(): no message, no clue. A Java caller gets a
+        // TuyaException naming the problem instead.
+        if (!isConnected) {
+            throw TuyaException("not connected - call connect() first")
+        }
+
         val request = PendingRequest(acceptedReplies)
         pending = request
         try {
