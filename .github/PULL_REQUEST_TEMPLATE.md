@@ -10,7 +10,7 @@
 
 Tick what applies, and say what you ran:
 
-- [ ] `dotnet build dotnet/TuyaLan.sln && dotnet test dotnet/TuyaLan.sln`
+- [ ] `dotnet build csharp/TuyaLan.sln && dotnet test csharp/TuyaLan.sln`
 - [ ] `cd android && ./gradlew :tuya-lan:test`
 - [ ] `python3 tools/reference_impl.py --selftest`
 - [ ] `python3 tools/test_roundtrip.py`

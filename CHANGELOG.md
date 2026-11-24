@@ -8,6 +8,23 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-24
+
+### Added
+- **Java support.** The library is coroutine-based, so `connect()`, `getStatus()` and the setters are `suspend` functions Java cannot call without building a `Continuation` by hand. `com.tuyalan.java.TuyaLanDevice` wraps every call in a blocking method - `connect()`, `getStatus()`, `getBool()`, `setBool()`, `setInt()`, `setString()`, `ping()`, `close()` - plus a `create()` factory so Java never meets a Kotlin default argument. `JavaInteropTest` compiles and runs with the unit tests, so the build fails if Java support breaks.
+
+### Changed (repository)
+- **`dotnet/` is now `csharp/`, `android/` is now `kotlin/`.** One folder was named after a framework, the other after a platform; both are now named after the language, which is what decides how you consume them. Workflows, the PR template, CONTRIBUTING and the guides were updated with the paths.
+
+## [2.1.1] - 2026-11-23
+
+### Fixed (Android)
+- **The same connection-state defect as 2.1.0, in Kotlin.** `isConnected` was `socket.isConnected && !socket.isClosed`; Java's `isConnected` only means the socket was connected once and stays true after the peer closes, while `isClosed` is true only when the caller closed it. A connection that died quietly therefore read as healthy for ever, and a host that cached the device reused a dead socket. The receive loop now records the loss, and `disconnect()` clears it.
+- `connect()` drops a dead socket instead of throwing "already connected".
+
+### Added (Android)
+- `ensureConnected()` - connect if needed, so a host does not cache the device and guess.
+
 ## [2.1.0] - 2026-11-23
 
 ### Fixed

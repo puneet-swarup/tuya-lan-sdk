@@ -23,17 +23,17 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore dotnet/TuyaLan.sln
+        run: dotnet restore csharp/TuyaLan.sln
 
       - name: Build
-        run: dotnet build dotnet/TuyaLan.sln --no-restore --configuration Release
+        run: dotnet build csharp/TuyaLan.sln --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test dotnet/TuyaLan.sln --no-build --configuration Release --verbosity normal
+        run: dotnet test csharp/TuyaLan.sln --no-build --configuration Release --verbosity normal
 
       # Catches packaging problems (icon, readme, metadata) before a release does.
       - name: Pack
-        run: dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
+        run: dotnet pack csharp/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
 
   # ---------------------------------------------------------
   # 2. Android (Kotlin) Build & Test
@@ -57,10 +57,10 @@ jobs:
           packages: platform-tools
 
       - name: Grant execute permission for gradlew
-        run: chmod +x android/gradlew
+        run: chmod +x kotlin/gradlew
 
       - name: Build and Test
-        run: cd android && ./gradlew :tuya-lan:testDebugUnitTest :tuya-lan:assembleRelease :sample-app:assembleDebug --no-daemon
+        run: cd kotlin && ./gradlew :tuya-lan:testDebugUnitTest :tuya-lan:assembleRelease :sample-app:assembleDebug --no-daemon
 
   # ---------------------------------------------------------
   # 3. Python Tools Validation

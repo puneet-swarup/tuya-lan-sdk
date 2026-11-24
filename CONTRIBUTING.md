@@ -15,8 +15,8 @@ evidence.
 ## Running the tests
 
 ```bash
-dotnet build dotnet/TuyaLan.sln
-dotnet test  dotnet/TuyaLan.sln
+dotnet build csharp/TuyaLan.sln
+dotnet test  csharp/TuyaLan.sln
 ```
 
 ```bash
@@ -39,7 +39,7 @@ either client at it:
 
 ```bash
 python3 tools/fake_device.py --envelope modern
-dotnet run --project dotnet/samples/TuyaLan.Demo -- toggle 127.0.0.1 eb0123456789abcdefghij 0123456789abcdef 3.5 1
+dotnet run --project csharp/samples/TuyaLan.Demo -- toggle 127.0.0.1 eb0123456789abcdefghij 0123456789abcdef 3.5 1
 ```
 
 `--envelope modern` makes the simulator reject the legacy control body, the way

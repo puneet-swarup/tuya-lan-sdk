@@ -31,13 +31,13 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore dotnet/TuyaLan.sln
+        run: dotnet restore csharp/TuyaLan.sln
 
       - name: Build Release
-        run: dotnet build dotnet/TuyaLan.sln --configuration Release --no-restore
+        run: dotnet build csharp/TuyaLan.sln --configuration Release --no-restore
 
       - name: Pack NuGet Package
-        run: dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
+        run: dotnet pack csharp/src/TuyaLan/TuyaLan.csproj --configuration Release --no-build --output ./nupkg
 
       # Ask for the key as late as possible: it lives for one hour and each
       # token buys exactly one key.
@@ -90,7 +90,7 @@ jobs:
 
       - name: Name the artifact after the tag
         run: |
-          cp android/tuya-lan/build/outputs/aar/tuya-lan-release.aar \
+          cp kotlin/tuya-lan/build/outputs/aar/tuya-lan-release.aar \
              "tuya-lan-${{ github.event.release.tag_name || inputs.tag }}.aar"
 
       - name: Attach the AAR to the release

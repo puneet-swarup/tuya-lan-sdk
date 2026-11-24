@@ -60,7 +60,7 @@ reference the projects directly:
 
 ```bash
 git clone https://github.com/puneet-swarup/tuya-lan-sdk.git
-dotnet add reference tuya-lan-sdk/dotnet/src/TuyaLan/TuyaLan.csproj
+dotnet add reference tuya-lan-sdk/csharp/src/TuyaLan/TuyaLan.csproj
 ```
 
 ## Quick start — C#
@@ -83,8 +83,8 @@ await device.SetDpAsync("1", true);
 ```
 
 ```bash
-dotnet build dotnet/TuyaLan.sln
-dotnet test  dotnet/TuyaLan.sln
+dotnet build csharp/TuyaLan.sln
+dotnet test  csharp/TuyaLan.sln
 ```
 
 ## Quick start — Kotlin
@@ -176,7 +176,7 @@ Full details in [`docs/01-protocol-3.5.md`](docs/01-protocol-3.5.md).
 ```
 tuya-lan-sdk/
 ├── docs/                      protocol, per-language guides, console, publishing
-├── dotnet/                    .NET 10 library, console demo, xUnit tests
+├── csharp/                    .NET 10 library, console demo, xUnit tests
 ├── android/                   Android library module, sample app, JVM tests
 ├── tools/
 │   ├── reference_impl.py      independent Python implementation + vector generator
@@ -271,6 +271,32 @@ MIT. See [LICENSE](LICENSE).
 
 This is an independent implementation written from the public reverse-engineering
 record; it is not affiliated with or endorsed by Tuya. Use it on hardware you own.
+
+## Using it from Java
+
+The library is coroutine-based, so `connect()`, `getStatus()` and the setters are
+`suspend` functions that Java cannot call directly. `com.tuyalan.java.TuyaLanDevice`
+is the same device with every call wrapped in a blocking method:
+
+```java
+try (TuyaLanDevice plug = TuyaLanDevice.create(
+        "192.168.1.42", "bf1234567890abcdefghij", "0123456789abcdef", "3.5")) {
+    plug.connect();
+    boolean on = plug.getBool("1");
+    plug.setBool("1", !on);
+}
+```
+
+| Kotlin | Java |
+|---|---|
+| `suspend fun connect()` | `plug.connect()` |
+| `suspend fun getStatus(): TuyaStatus` | `plug.getStatus()` |
+| `suspend fun setDp(id, boolean)` | `plug.setBool(id, value)` |
+| `suspend fun ping(): Boolean` | `plug.ping()` |
+| `disconnect()` | `plug.close()` / `plug.disconnect()` |
+
+`JavaInteropTest` compiles and runs as part of the Android unit tests: if Java
+support breaks, the build fails.
 
 ## Connection lifecycle
 

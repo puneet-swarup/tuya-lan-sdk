@@ -1,6 +1,6 @@
 # Android / Kotlin guide
 
-Library module: `android/tuya-lan` (namespace `com.tuyalan`, `minSdk` 24).
+Library module: `kotlin/tuya-lan` (namespace `com.tuyalan`, `minSdk` 24).
 Dependencies: `kotlinx-coroutines-core` and `okhttp` for the cloud client; JSON is
 handled with the `org.json` that ships with Android, so there is no serialisation
 dependency.

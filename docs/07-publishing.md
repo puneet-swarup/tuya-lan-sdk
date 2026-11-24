@@ -6,8 +6,8 @@ all it takes.
 
 ## Before the first release
 
-- [ ] `Version` in `dotnet/src/TuyaLan/TuyaLan.csproj` and the version in
-      `android/tuya-lan/build.gradle.kts` agree, and match `CHANGELOG.md`.
+- [ ] `Version` in `csharp/src/TuyaLan/TuyaLan.csproj` and the version in
+      `kotlin/tuya-lan/build.gradle.kts` agree, and match `CHANGELOG.md`.
 - [ ] `LICENSE` carries your name.
 - [ ] The `RepositoryUrl` and package metadata point at the real repository.
 - [ ] `assets/icon.png` is 512×512 and reads well at 64 px.
@@ -73,7 +73,7 @@ than a draft that sits there.
 To pack locally first and check what goes in:
 
 ```bash
-dotnet pack dotnet/src/TuyaLan/TuyaLan.csproj -c Release -o ./nupkg
+dotnet pack csharp/src/TuyaLan/TuyaLan.csproj -c Release -o ./nupkg
 unzip -l nupkg/TuyaLan.2.0.0.nupkg
 ```
 
@@ -82,12 +82,12 @@ and `icon.png`.
 
 ## Maven Central
 
-There is no `maven-publish` block in `android/tuya-lan/build.gradle.kts` yet —
+There is no `maven-publish` block in `kotlin/tuya-lan/build.gradle.kts` yet —
 add the one below when you are ready. It is inert until a publish task runs, so
 it is safe to commit early.
 
 ```kotlin
-// android/tuya-lan/build.gradle.kts
+// kotlin/tuya-lan/build.gradle.kts
 plugins {
     id("com.android.library")
     id("maven-publish")

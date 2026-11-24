@@ -2,8 +2,8 @@
 
 Every value on this page is produced by `tools/reference_impl.py --emit-vectors`,
 an independent Python implementation of the protocol, and asserted by both the
-C# suite (`dotnet/tests/TuyaLan.Tests/VectorTests.cs`) and the Kotlin suite
-(`android/tuya-lan/src/test/kotlin/com/tuyalan/ProtocolVectorTest.kt`). If a port
+C# suite (`csharp/tests/TuyaLan.Tests/VectorTests.cs`) and the Kotlin suite
+(`kotlin/tuya-lan/src/test/kotlin/com/tuyalan/ProtocolVectorTest.kt`). If a port
 disagrees with this page, the port is wrong.
 
 ## Shared inputs

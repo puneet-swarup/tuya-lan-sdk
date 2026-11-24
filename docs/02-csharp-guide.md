@@ -6,16 +6,16 @@ two `AesGcm` calls in `TuyaCrypto` with BouncyCastle's `GcmBlockCipher`; every
 other part of the library is framework-neutral.
 
 ```
-dotnet/TuyaLan.sln
+csharp/TuyaLan.sln
 ├── src/TuyaLan/                     the library
 ├── samples/TuyaLan.Demo/            console playground
 └── tests/TuyaLan.Tests/             known-answer tests (xunit)
 ```
 
 ```bash
-dotnet build dotnet/TuyaLan.sln
-dotnet test  dotnet/TuyaLan.sln
-dotnet run   --project dotnet/samples/TuyaLan.Demo -- scan
+dotnet build csharp/TuyaLan.sln
+dotnet test  csharp/TuyaLan.sln
+dotnet run   --project csharp/samples/TuyaLan.Demo -- scan
 ```
 
 ## Namespaces
