@@ -49,8 +49,27 @@ public class JavaInteropTest {
     public void isUsableInTryWithResources() {
         try (TuyaLanDevice device = TuyaLanDevice.create(
                 "192.168.1.42", "bf1234567890abcdefghij", "0123456789abcdef")) {
-            assertFalse(device.isConnected());
+            assertFalse("a device that was never connected is not connected",
+                    device.isConnected());
         }
-        assertFalse("closed devices report closed", device.isConnected());
+    }
+
+    /**
+     * Proves a blocking call is reachable from Java, without depending on a
+     * device being there: the connect timeout is 200ms and the address is one
+     * that cannot answer, so this is a compile-and-call test, not a network test.
+     */
+    @Test
+    public void aBlockingCallCanBeMadeFromJava() {
+        TuyaLanDevice device = new TuyaLanDevice(
+                "127.0.0.1", "bf1234567890abcdefghij", "0123456789abcdef",
+                "3.5", 1, 200, 200L);
+        try {
+            device.connect();
+        } catch (RuntimeException unreachable) {
+            // expected: nothing listens on port 1
+        } finally {
+            device.close();
+        }
     }
 }
