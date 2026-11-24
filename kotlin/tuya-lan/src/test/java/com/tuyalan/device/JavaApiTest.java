@@ -37,14 +37,14 @@ public class JavaApiTest {
     }
 
     @Test
-    public void constructsAndReportsState() {
+    public void constructsAndReportsState() throws TuyaException {
         TuyaDevice device = new TuyaLocalDevice(options());
         assertFalse("a device that was never connected is not connected", device.isConnected());
         device.close();
     }
 
     @Test
-    public void registersListenersAsLambdas() {
+    public void registersListenersAsLambdas() throws TuyaException {
         TuyaDevice device = new TuyaLocalDevice(options());
 
         // A Java lambda against a Kotlin `fun interface` - this is the whole
@@ -78,7 +78,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void isUsableInTryWithResources() {
+    public void isUsableInTryWithResources() throws TuyaException {
         try (TuyaDevice device = new TuyaLocalDevice(options())) {
             assertNotNull(device);
             assertFalse(device.isConnected());

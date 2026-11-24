@@ -31,27 +31,35 @@ interface TuyaDevice : AutoCloseable {
     val protocolVersion: String
 
     /** Connects, or reconnects over a socket that died. */
+    @Throws(TuyaException::class)
     fun connect()
 
     /** Closes the connection. Safe to call when already closed. */
+    @Throws(TuyaException::class)
     override fun close()
 
     /** Reads every data point the device reports. */
+    @Throws(TuyaException::class)
     fun getStatus(): TuyaStatus
 
     /** Writes several data points in one command. */
+    @Throws(TuyaException::class)
     fun setDps(dps: Map<String, Any?>)
 
     /** Writes one boolean data point, e.g. a relay. */
+    @Throws(TuyaException::class)
     fun setDp(dpId: String, value: Boolean)
 
     /** Writes one integer data point, e.g. a countdown. */
+    @Throws(TuyaException::class)
     fun setDp(dpId: String, value: Int)
 
     /** Writes one string data point. */
+    @Throws(TuyaException::class)
     fun setDp(dpId: String, value: String)
 
     /** Sends a heartbeat and waits for the reply. */
+    @Throws(TuyaException::class)
     fun ping(): Boolean
 
     /** Called with every status the device pushes. */
