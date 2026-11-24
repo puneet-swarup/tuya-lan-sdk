@@ -65,7 +65,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void blockingCallsAreReachableFromJava() {
+    public void blockingCallsAreReachableFromJava() throws TuyaException {
         TuyaDevice device = new TuyaLocalDevice(options());
         try {
             device.connect();
@@ -86,7 +86,7 @@ public class JavaApiTest {
     }
 
     @Test
-    public void typedDataPointsAreWritable() {
+    public void typedDataPointsAreWritable() throws TuyaException {
         TuyaDevice device = new TuyaLocalDevice(options());
         try {
             device.setDp("1", true);
