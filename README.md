@@ -231,8 +231,11 @@ gateway sub-protocols beyond the `cid` field, and category-specific DP encodings
 * **One request in flight.** Tuya devices serialise on their side; both clients
   hold a semaphore and correlate replies by command family rather than by sequence
   number, because 3.5 devices use a global sequence counter of their own.
-* **Both APIs are async and cancellable** — `Task`/`CancellationToken` in C#,
-  `suspend`/coroutines in Kotlin.
+* **Both clients are async and cancellable underneath** — `Task`/`CancellationToken`
+  in C#, `suspend`/coroutines in Kotlin. The Kotlin side also exposes a blocking
+  API (`TuyaDevice`) because a public JVM library has to serve Java, which cannot
+  call a `suspend` function; the coroutine API is `TuyaDeviceAsync` on the same
+  object.
 
 ## Getting the local key
 

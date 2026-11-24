@@ -47,7 +47,14 @@ device.StatusUpdated += (_, e) =>
 device.ProtocolError += (_, e) =>
     Console.WriteLine($"bad frame: {e.Error.Message}");
 
-await device.ConnectAsync();           // performs the session-key handshake
+// EnsureConnectedAsync connects only if the connection is not usable, so a
+// socket that died - router timeout, device reboot, the machine sleeping - is
+// replaced instead of being reused. IsConnected is authoritative: it turns
+// false as soon as the receive loop or the heartbeat notices the death.
+await device.EnsureConnectedAsync();   // performs the session-key handshake if needed
+
+device.Disconnected += (_, ex) =>
+    Console.WriteLine($"connection lost: {ex.Message}");
 
 var status = await device.GetStatusAsync();
 bool? switchState = status.GetBool("1");

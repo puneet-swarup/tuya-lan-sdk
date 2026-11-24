@@ -61,11 +61,11 @@ lifecycleScope.launch {
 }
 
 lifecycleScope.launch {
-    device.connect()                            // performs the session-key handshake
-    val status = device.getStatus()
-    device.setDp("1", !(status.getBool("1") ?: false))
+    device.connectAsync()                       // performs the session-key handshake
+    val status = device.getStatusAsync()
+    device.setDpAsync("1", !(status.getBool("1") ?: false))
 
-    device.setDps(
+    device.setDpsAsync(
         TuyaDps()
             .set("1", true)
             .set("2", 500)
@@ -74,7 +74,9 @@ lifecycleScope.launch {
 }
 
 override fun onDestroy() {
-    device.close()                              // non-suspending shutdown
+    // close() is the non-suspending teardown, and it is what Java calls too.
+    // From a coroutine, disconnectAsync() is the same thing without blocking.
+    device.close()
     super.onDestroy()
 }
 ```
