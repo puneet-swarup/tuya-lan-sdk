@@ -145,7 +145,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
     }
 
     /** Opens the TCP connection and negotiates a session key when the version needs one. */
-    suspend fun connectAsync() {
+    override suspend fun connectAsync() {
         if (isConnected) throw IllegalStateException("already connected")
 
         // A connection that died leaves its socket behind; drop it rather than
@@ -204,7 +204,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
     }
 
     /** Closes the connection and stops the background loops. */
-    suspend fun disconnectAsync() {
+    override suspend fun disconnectAsync() {
         scope?.cancel()
         scope = null
         heartbeatJob = null
@@ -219,7 +219,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
     }
 
     /** Queries the current data points. */
-    suspend fun getStatusAsync(): TuyaStatus {
+    override suspend fun getStatusAsync(): TuyaStatus {
         val reply = sendRequest(
             queryCommand,
             buildQueryPayload(),
@@ -248,7 +248,7 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
     suspend fun setDpsAsync(dps: TuyaDps) = setDpsAsync(dps.asMap)
 
     /** Sends one or more data points and waits for the device to acknowledge. */
-    suspend fun setDpsAsync(dps: Map<String, Any?>) {
+    override suspend fun setDpsAsync(dps: Map<String, Any?>) {
         val payload = buildControlPayload(dps)
         val reply = sendRequest(
             controlCommand,
@@ -279,16 +279,16 @@ class TuyaLocalDevice(val options: TuyaDeviceOptions) : TuyaDevice, TuyaDeviceAs
     }
 
     /** Sets a single boolean data point, e.g. a switch. */
-    suspend fun setDpAsync(dpId: String, value: Boolean) = setDpsAsync(TuyaDps().set(dpId, value))
+    override suspend fun setDpAsync(dpId: String, value: Boolean) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sets a single numeric data point, e.g. brightness. */
-    suspend fun setDpAsync(dpId: String, value: Int) = setDpsAsync(TuyaDps().set(dpId, value))
+    override suspend fun setDpAsync(dpId: String, value: Int) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sets a single string data point, e.g. a work mode. */
-    suspend fun setDpAsync(dpId: String, value: String) = setDpsAsync(TuyaDps().set(dpId, value))
+    override suspend fun setDpAsync(dpId: String, value: String) = setDpsAsync(TuyaDps().set(dpId, value))
 
     /** Sends a heartbeat and returns true when the device answers. */
-    suspend fun pingAsync(): Boolean = try {
+    override suspend fun pingAsync(): Boolean = try {
         sendRequest(
             TuyaCommand.HEART_BEAT,
             ByteArray(0),
