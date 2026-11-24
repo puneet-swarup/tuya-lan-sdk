@@ -24,8 +24,12 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     api("com.squareup.okhttp3:okhttp:4.12.0")
 
+    // On Android, org.json ships with the platform; on a plain JVM it does not,
+    // and the cloud client needs it. This is the one dependency the AAR never
+    // had to declare.
+    api("org.json:json:20240303")
+
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
 
