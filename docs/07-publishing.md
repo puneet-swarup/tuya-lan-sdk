@@ -82,88 +82,44 @@ and `icon.png`.
 
 ## Maven Central
 
-There is no `maven-publish` block in `kotlin/tuya-lan/build.gradle.kts` yet —
-add the one below when you are ready. It is inert until a publish task runs, so
-it is safe to commit early.
+**Live.** `io.github.puneet-swarup:tuya-lan` is published — 3.2.0 was the first
+release, and the pipeline does it automatically from then on.
 
-```kotlin
-// kotlin/tuya-lan/build.gradle.kts
-plugins {
-    id("com.android.library")
-    id("maven-publish")
-}
+### How it is wired
 
-android {
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-        }
-    }
-}
+| piece | where |
+|---|---|
+| module | `kotlin/tuya-lan-core` — a plain JVM library, so Central gets a jar, not an AAR |
+| plugin | `com.vanniktech.maven.publish` 0.37.0 |
+| coordinates | `io.github.puneet-swarup:tuya-lan`, version from `VERSION_NAME` |
+| POM metadata | name, description, URL, MIT licence, developer, SCM — Central rejects a POM missing any of it |
+| signing | `signAllPublications()`, key from `signingInMemoryKey` + password |
+| release | **manual** — the plugin uploads, Central validates, a human presses Publish on central.sonatype.com |
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("release") {
-                from(components["release"])
-                groupId = "com.tuyalan"
-                artifactId = "tuya-lan"
-                version = "2.0.0"
+### Secrets the workflow needs
 
-                pom {
-                    name.set("Tuya LAN SDK for Android")
-                    description.set("Tuya LAN protocol (3.3 / 3.4 / 3.5) and cloud API client.")
-                    url.set("https://github.com/puneet-swarup/tuya-lan-sdk")
-                    licenses {
-                        license {
-                            name.set("MIT")
-                            url.set("https://opensource.org/licenses/MIT")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("puneet-swarup")
-                            name.set("Puneet Swarup")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:https://github.com/puneet-swarup/tuya-lan-sdk.git")
-                        developerConnection.set("scm:git:ssh://git@github.com/puneet-swarup/tuya-lan-sdk.git")
-                        url.set("https://github.com/puneet-swarup/tuya-lan-sdk")
-                    }
-                }
-            }
-        }
-    }
-}
-```
+Set as repository secrets; the workflow maps them to the property names the
+plugin reads.
 
-### One-time setup for Central
+| secret | plugin property |
+|---|---|
+| `MAVEN_CENTRAL_USERNAME` | `mavenCentralUsername` (portal **token** username, not your login) |
+| `MAVEN_CENTRAL_PASSWORD` | `mavenCentralPassword` |
+| `GPG_PRIVATE_KEY` | `signingInMemoryKey` (`gpg --armor --export-secret-keys <fingerprint>`) |
+| `GPG_PASSPHRASE` | `signingInMemoryKeyPassword` |
 
-Maven Central does not take uploads directly any more; it goes through the
-Central Portal.
+### Cutting a release
 
-1. Create a namespace at [central.sonatype.com](https://central.sonatype.com/)
-   and verify it (a GitHub repository under your account is the usual proof for
-   `io.github.<user>`).
-2. Generate a user token in the portal.
-3. Add `MAVEN_USERNAME` and `MAVEN_PASSWORD` as repository secrets.
-4. Add signing: Central requires every artifact to be GPG-signed. Export a key,
-   add `SIGNING_KEY` (ASCII-armoured) and `SIGNING_PASSWORD` as secrets, and
-   apply `signing` to the publication.
+1. Set `VERSION_NAME` in `kotlin/gradle.properties` to the new version.
+2. Tag `v<same version>` and publish the GitHub release.
+3. The workflow refuses to publish if the tag and `VERSION_NAME` disagree —
+   Central never allows the same coordinates twice, so a mismatch must fail early.
+4. It uploads, waits for Central's validation, and fails the build if the
+   deployment is rejected.
+5. Press **Publish** in the portal. Sync to Maven Central takes 10–30 minutes.
 
-A simpler first step, if you want something published today: GitHub Packages
-accepts the same `maven-publish` block pointed at
-`https://maven.pkg.github.com/puneet-swarup/tuya-lan-sdk`, authenticated with
-`GITHUB_TOKEN`. No namespace or signing required.
-
-### Releasing
-
-```bash
-cd kotlin
-./gradlew :tuya-lan:publishReleasePublicationToMavenLocal   # smoke test
-./gradlew :tuya-lan:publish                                 # to the configured repository
-```
+Once published, a version is permanent. A mistake means publishing the next
+version, never re-uploading the same one.
 
 ## After the first publish
 

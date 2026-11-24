@@ -9,6 +9,10 @@ Releases before 2.0.0 predate this file; `git log` is the record for those.
 ## [Unreleased]
 
 ### Documented
+- Install now leads with the Maven Central coordinate `io.github.puneet-swarup:tuya-lan`, with Gradle and Maven snippets, a Maven Central badge, and the note that the AAR is the same classes packaged for Android — use one or the other.
+- `docs/07-publishing.md` described a `maven-publish` block that did not exist yet. It now documents what is actually wired: the core module, the plugin, the four secrets, and the manual-release step.
+
+### Documented
 - The Android guide showed `device.connect()` / `getStatus()` / `setDp()` inside a coroutine. After 3.0.0 those are the *blocking* methods, so following the guide would pin a thread; they are `connectAsync` / `getStatusAsync` / `setDpAsync` now.
 - The C# guide never mentioned `EnsureConnectedAsync`, `Disconnected`, or what `IsConnected` means - the three things 2.1.0 changed.
 - The README claimed both APIs are async; the Kotlin core is blocking first, with coroutines as `TuyaDeviceAsync`.

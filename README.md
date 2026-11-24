@@ -12,6 +12,7 @@
   <a href="https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml"><img src="https://github.com/puneet-swarup/tuya-lan-sdk/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://github.com/puneet-swarup/tuya-lan-sdk/releases"><img src="https://img.shields.io/github/v/release/puneet-swarup/tuya-lan-sdk" alt="Release"></a>
   <a href="https://www.nuget.org/packages/TuyaLan"><img src="https://img.shields.io/nuget/v/TuyaLan" alt="NuGet"></a>
+  <a href="https://central.sonatype.com/artifact/io.github.puneet-swarup/tuya-lan"><img src="https://img.shields.io/maven-central/v/io.github.puneet-swarup/tuya-lan?label=maven%20central" alt="Maven Central"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/puneet-swarup/tuya-lan-sdk" alt="License"></a>
   <img src="https://img.shields.io/badge/Java-17%2B-ED8B00?logo=openjdk&logoColor=white" alt="Java 17+">
   <img src="https://img.shields.io/badge/Kotlin-2.x-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin">
@@ -58,35 +59,46 @@ git clone https://github.com/puneet-swarup/tuya-lan-sdk.git
 dotnet add reference tuya-lan-sdk/csharp/src/TuyaLan/TuyaLan.csproj
 ```
 
-### Java and Kotlin on the JVM (desktop, server, CLI)
+### Java, Kotlin and Android — Maven Central
 
-A **`.jar`**, attached to every release:
+Published as `io.github.puneet-swarup:tuya-lan`. One coordinate for a Java
+product, a Kotlin desktop app and an Android app:
 
-```bash
-curl -L -O https://github.com/puneet-swarup/tuya-lan-sdk/releases/latest/download/tuya-lan-3.1.0.jar
-javac -cp tuya-lan-3.1.0.jar:. MyApp.java
-java  -cp tuya-lan-3.1.0.jar:. MyApp
-```
-
-Add `kotlinx-coroutines-core`, `okhttp` and `org.json` to the classpath at
-runtime; the jar does not bundle them. Not on Maven Central yet — that needs a
-namespace and signing, which [`docs/07-publishing.md`](docs/07-publishing.md) covers.
-
-### Android
-
-An **`.aar`** — an Android packaging format, which nothing else can read:
-
-```bash
-curl -L -o app/libs/tuya-lan-3.1.0.aar \
-  https://github.com/puneet-swarup/tuya-lan-sdk/releases/latest/download/tuya-lan-v3.1.0.aar
-```
+**Gradle**
 
 ```kotlin
-implementation(files("libs/tuya-lan-3.1.0.aar"))
+implementation("io.github.puneet-swarup:tuya-lan:3.2.0")
 ```
 
-Both are the same compiled classes: the jar is the AAR's `classes.jar`, published
-on its own so a Java project can use it. Do not add both.
+**Maven**
+
+```xml
+<dependency>
+  <groupId>io.github.puneet-swarup</groupId>
+  <artifactId>tuya-lan</artifactId>
+  <version>3.2.0</version>
+</dependency>
+```
+
+That pulls the jar, its POM and its three dependencies — `kotlinx-coroutines-core`,
+`okhttp` and `org.json` — transitively. Every file is GPG-signed; the public key is
+on `keyserver.ubuntu.com`.
+
+Android gets the same classes from the same coordinate. The `.aar` on the
+[releases page](https://github.com/puneet-swarup/tuya-lan-sdk/releases) exists for
+projects that vendor the file rather than resolve from Maven — it is the same
+code, packaged for the Android Gradle plugin, and carries the three network
+permissions in its manifest. **Use one or the other, not both.**
+
+### Without a build tool
+
+```bash
+curl -L -O https://repo1.maven.org/maven2/io/github/puneet-swarup/tuya-lan/3.2.0/tuya-lan-3.2.0.jar
+javac -cp tuya-lan-3.2.0.jar:. MyApp.java
+java  -cp tuya-lan-3.2.0.jar:. MyApp
+```
+
+You then supply the three dependencies yourself.
 
 ## Quick start — C#
 
