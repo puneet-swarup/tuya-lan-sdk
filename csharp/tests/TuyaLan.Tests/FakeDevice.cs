@@ -40,8 +40,17 @@ public sealed class FakeDevice : IDisposable
     public TcpClient? Current { get; private set; }
 
     /// <summary>Closes the peer's side, the way a router timeout or a reboot would.</summary>
+    /// <summary>
+    /// Closes the peer's side. Waits for the accept loop to have stored the
+    /// socket first: the kernel completes the TCP handshake before AcceptAsync
+    /// returns, so dropping immediately after a connect can otherwise close
+    /// nothing and leave the device connected - the same race that made the
+    /// Kotlin test fail intermittently.
+    /// </summary>
     public void DropConnection()
     {
+        DateTime deadline = DateTime.UtcNow.AddSeconds(2);
+        while (Current is null && DateTime.UtcNow < deadline) Thread.Sleep(5);
         try { Current?.Close(); } catch { /* already gone */ }
         Current = null;
     }

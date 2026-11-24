@@ -44,8 +44,20 @@ class FakeDevice : AutoCloseable {
         }
     }
 
-    /** Closes the peer's side, the way a router timeout or a reboot would. */
+    /**
+     * Closes the peer's side, the way a router timeout or a reboot would.
+     *
+     * Waits for the accept thread to have stored the socket first. The kernel
+     * completes the TCP handshake before `accept()` returns, so a caller that
+     * drops immediately after connecting can otherwise close nothing and leave
+     * the device happily connected - which is what made
+     * isConnectedTurnsFalseWhenThePeerGoesAway fail intermittently.
+     */
     fun dropConnection() {
+        val deadline = System.currentTimeMillis() + 2000
+        while (current == null && System.currentTimeMillis() < deadline) {
+            Thread.sleep(5)
+        }
         runCatching { current?.close() }
         current = null
     }
