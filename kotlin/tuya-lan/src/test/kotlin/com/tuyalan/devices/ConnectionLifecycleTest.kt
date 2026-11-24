@@ -33,6 +33,10 @@ class ConnectionLifecycleTest {
             TuyaLocalDevice(options(peer.port)).use { device ->
                 device.connect()
                 assertTrue(device.isConnected)
+
+                // The kernel completes the TCP handshake before the accept thread
+                // gets scheduled, so the count is waited for, never assumed.
+                assertTrue("the peer never accepted a connection", waitUntil(2000) { peer.acceptedCount >= 1 })
                 assertEquals(1, peer.acceptedCount)
             }
         }
@@ -66,6 +70,7 @@ class ConnectionLifecycleTest {
                 device.ensureConnected()
 
                 assertTrue(device.isConnected)
+                assertTrue("the peer never saw the reconnect", waitUntil(2000) { peer.acceptedCount >= 2 })
                 assertEquals(2, peer.acceptedCount)
             }
         }
@@ -78,6 +83,10 @@ class ConnectionLifecycleTest {
                 device.connect()
                 device.ensureConnected()
                 device.ensureConnected()
+
+                // Give a wrong implementation time to make a second connection
+                // before declaring that it did not.
+                delay(200)
                 assertEquals(1, peer.acceptedCount)
             }
         }

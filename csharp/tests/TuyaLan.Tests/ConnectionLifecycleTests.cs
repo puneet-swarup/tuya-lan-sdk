@@ -37,6 +37,10 @@ public class ConnectionLifecycleTests
         await device.ConnectAsync();
 
         Assert.True(device.IsConnected);
+
+        // The kernel completes the TCP handshake before the accept loop gets
+        // scheduled, so the count is waited for, never assumed.
+        Assert.True(await WaitUntil(() => peer.AcceptedCount >= 1, TimeSpan.FromSeconds(2)));
         Assert.Equal(1, peer.AcceptedCount);
     }
 
@@ -70,6 +74,7 @@ public class ConnectionLifecycleTests
         await device.EnsureConnectedAsync();
 
         Assert.True(device.IsConnected);
+        Assert.True(await WaitUntil(() => peer.AcceptedCount >= 2, TimeSpan.FromSeconds(2)));
         Assert.Equal(2, peer.AcceptedCount);
     }
 
@@ -83,6 +88,9 @@ public class ConnectionLifecycleTests
         await device.EnsureConnectedAsync();
         await device.EnsureConnectedAsync();
 
+        // Give a wrong implementation time to make a second connection before
+        // declaring that it did not.
+        await Task.Delay(200);
         Assert.Equal(1, peer.AcceptedCount);
     }
 
