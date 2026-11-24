@@ -16,6 +16,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "TuyaLanAndroid"
 
-include(":tuya-lan-core")
 include(":tuya-lan")
 include(":sample-app")

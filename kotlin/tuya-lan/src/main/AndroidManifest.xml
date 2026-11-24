@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--
-      This module only repackages :tuya-lan-core as an AAR. The code, the tests
-      and the public API live in the core module, which has no Android in it -
-      so the Android-specific part, the permissions a consumer needs, lives here.
-    -->
-
     <!-- Local control talks to devices on the LAN over TCP 6668 and UDP 6667/7000. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

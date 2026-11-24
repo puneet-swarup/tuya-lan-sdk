@@ -10,7 +10,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>TuyaLan</PackageId>
-    <Version>3.1.0</Version>
+    <Version>3.0.0</Version>
     <Title>Tuya LAN SDK</Title>
     <Authors>Puneet Swarup</Authors>
     <Company>Puneet Swarup</Company>

@@ -1,20 +1,16 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")
 }
 
-// The library itself is pure JVM and lives in :tuya-lan-core, which produces the
-// .jar a Java or desktop project consumes. This module exists only to package the
-// same code as an .aar for Android, because the Android Gradle plugin cannot
-// consume a plain .jar module as a library dependency of an app.
-
 android {
-    namespace = "com.tuyalan.android"
+    namespace = "com.tuyalan"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 24
-        // The rules travel with the code they describe.
-        consumerProguardFiles("../tuya-lan-core/consumer-rules.pro")
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -25,10 +21,21 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    kotlin {
+        compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
-    // api, not implementation: the classes must reach an app that depends on the
-    // AAR, exactly as they did when the sources lived in this module.
-    api(project(":tuya-lan-core"))
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    api("com.squareup.okhttp3:okhttp:4.12.0")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
 }
